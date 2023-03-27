@@ -6,7 +6,8 @@ public class VersionControlSystem {
     private String currentDirectory;
     private String vcsDirectory;
     private final String separator;
-    private final String[] subDirectories = {"Files", "StagingArea", "Commits", "Trees"};
+    private final String[] subDirectories = {"Objects", "References"};
+    private final String[] refFiles = {"HEAD", "ROOT"};
     public VersionControlSystem() {
         currentDirectory = System.getProperty("user.dir");
         vcsDirectory = null;
@@ -30,7 +31,7 @@ public class VersionControlSystem {
 
     public void init() {
         if (this.currentDirectory != null && Files.exists(Paths.get(currentDirectory))) {
-            File vcs = new File(currentDirectory + separator + ".vcs");
+            File vcs = new File(pathBuilder(new String[] {".vcs"}));
             if (vcs.mkdir()) {
                 Path path = vcs.toPath();
                 try {
@@ -39,18 +40,41 @@ public class VersionControlSystem {
                     e.printStackTrace();
                 }
                 for (String subDirectory : subDirectories) {
-                    File subfolder = new File(currentDirectory + separator + ".vcs", subDirectory);
+                    File subfolder = new File(pathBuilder(new String[] {".vcs"}), subDirectory);
                     if (!subfolder.mkdir()) {
                         vcs.delete();
-                        System.out.println("Failed to create " + currentDirectory + separator+ subDirectory);
+                        System.out.println("Failed to create " + pathBuilder(new String[] {".vcs", subDirectory}));
+                        return;
+                    }
+                }
+                for (String refFile : refFiles) {
+                    File file = new File(pathBuilder(new String[] {".vcs", subDirectories[1]}), refFile);
+                    try {
+                        if (!file.createNewFile()) {
+                            vcs.delete();
+                            System.out.println("Failed to create " + pathBuilder(new String[] {".vcs", subDirectories[1], refFile}));
+                            return;
+                        }
+                    } catch (java.io.IOException e) {
+                        vcs.delete();
+                        System.out.println("Failed to create " + pathBuilder(new String[] {".vcs", subDirectories[1], refFile}));
                         return;
                     }
                 }
             } else {
-                System.out.println("Failed to create " + currentDirectory + separator+ ".vcs");
+                System.out.println("Failed to create " + pathBuilder(new String[] {".vcs"}));
             }
         } else {
             System.out.println("Current directory not set");
         }
+    }
+    private String pathBuilder(String[] path) {
+        StringBuilder output = new StringBuilder();
+        output.append(currentDirectory);
+        for (String p : path) {
+            output.append(separator);
+            output.append(p);
+        }
+        return output.toString();
     }
 }
