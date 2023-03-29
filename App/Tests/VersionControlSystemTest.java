@@ -34,7 +34,7 @@ class VersionControlSystemTest {
             FileWriter writer = new FileWriter(testDir +"\\testText.txt");
             writer.write("This is some nice text, yada yada");
             writer.close();
-            vcs.add(testDir +"\\testText.txt", 0);
+            vcs.add(testDir +"\\testText.txt");
             BufferedReader br = new BufferedReader(new FileReader(testDir +"\\.vcs\\Index"));
             String firstLine = String.format("%s %s 0", "testText.txt", vcs.hash(testDir +"\\testText.txt"));
             assertEquals(br.readLine(), firstLine);

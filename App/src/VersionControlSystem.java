@@ -87,24 +87,39 @@ public class VersionControlSystem {
         }
         return null;
     }
-    public void add(String path, int status) {
+
+    /**
+     * Stages the changes made to a file and updates the index file accordingly
+     * @param path: the path to the file to be added
+     * @param state: int, representing the state of the change. 0 for modified, 1 for added, 2 for removed
+     */
+    public void add(String path) {
         try {
             File head = new File(this.head);
             File index = new File(this.index);
             File file = new File(path);
             String name = file.getName();
             String hash = hash(path);
+            int state = 1;
             BufferedReader br = new BufferedReader(new FileReader(head));
             StringBuilder sb = new StringBuilder();
             boolean exists = false;
             String line;
             if (br.readLine() != null) {
+                String lastHash = lastCommitHash(path);
+                if (lastHash != null) {
+                    // Some black magic fckery
+                }
+                // Some more black magic fckery
+            }
+            if (!file.exists()) {
+                System.out.println(String.format("File at %s does not exist", path));
                 return;
             }
             br = new BufferedReader(new FileReader(index));
             while ((line = br.readLine()) != null) {
                 if (line.length() == name.length() + 43 && line.startsWith(name)) {  // space between name and hash, 40 character hash, space between hash and status, and 1 number status
-                    sb.append(String.format("%s %s %d", name, hash, status));
+                    sb.append(String.format("%s %s %d", name, hash, state));
                     exists = true;
                 } else {
                     sb.append(line);
@@ -112,7 +127,7 @@ public class VersionControlSystem {
                 sb.append("\n");
             }
             if (!exists) {
-                sb.append(String.format("%s %s %d", name, hash, status));
+                sb.append(String.format("%s %s %d", name, hash, state));
             }
             createFile(path, hash);
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(index))) {
@@ -123,6 +138,15 @@ public class VersionControlSystem {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Returns the hash of the file at the last commit
+     * @param path: path to the file
+     * @return string of the hash of the file in the last commit, or null if the file isn't in the last commit
+     */
+    private String lastCommitHash(String path) {
+        return null;
     }
     /**
      * Returns a path to a file or directory given how to get there from currentDirectory
