@@ -8,28 +8,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class VersionControlSystem {
-    private final String currentDirectory;
-    private final String vcsDirectory;
-    private final String head;
-    private final String index;
-    private final String objects;
+    private final Path currentDirectory;
+    private final Path vcsDirectory;
+    private final File head;
+    private final File index;
+    private final Path objects;
     private final String separator;
+    private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects"};
     private static final String[] files = {"HEAD", "Index"};
     public VersionControlSystem(String currentDirectory) {
-        this.currentDirectory = currentDirectory;
+        this.currentDirectory = Paths.get(currentDirectory);
         this.separator = System.getProperty("file.separator");
-        this.vcsDirectory = pathBuilder(new String[]{".vcs"}, currentDirectory, separator);
-        this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory, separator);
-        this.index = pathBuilder(new String[]{"Index"}, vcsDirectory, separator);
-        this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory, separator);
+        this.vcsDirectory = pathBuilder(new String[]{".vcs"}, this.currentDirectory);
+        this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory).toFile();
+        this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
+        this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects) {
-        this.currentDirectory = currentDirectory;
-        this.vcsDirectory = vcsDirectory;
-        this.head = head;
-        this.index = index;
-        this.objects = objects;
+        this.currentDirectory = Paths.get(currentDirectory);
+        this.vcsDirectory = Paths.get(vcsDirectory);
+        this.head = new File(head);
+        this.index = new File(index);
+        this.objects = Paths.get(objects);
         this.separator = System.getProperty("file.separator");
     }
     /**
@@ -37,9 +38,9 @@ public class VersionControlSystem {
      * If a .vcs folder already exists, do nothing
      */
     public static VersionControlSystem init(String dir) {
-        String separator = System.getProperty("file.separator");
-        File vcs = new File(pathBuilder(new String[] {".vcs"}, dir, separator));
-        if (!Files.exists(Paths.get(dir))) {
+        Path start = Paths.get(dir);
+        File vcs = pathBuilder(new String[] {".vcs"}, start).toFile();
+        if (!Files.exists(start)) {
             System.out.println("Directory doesn't exist");
         } else if (vcs.exists()) {
             System.out.println("Version Control System already exists");
@@ -52,35 +53,34 @@ public class VersionControlSystem {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                String vcsDirectory = path.toString();
                 for (String subDirectory : subDirectories) {
-                    File subfolder = new File(vcsDirectory, subDirectory);
+                    File subfolder = new File(path.toFile(), subDirectory);
                     if (!subfolder.mkdir()) {
                         vcs.delete();
-                        System.out.println("Failed to create " + pathBuilder(new String[] {subDirectory}, vcsDirectory, separator));
+                        System.out.println("Failed to create " + pathBuilder(new String[] {subDirectory}, path));
                         return null;
                     } else {
                         sub.put(subDirectory, subfolder.toPath().toAbsolutePath().toString());
                     }
                 }
                 for (String f : files) {
-                    File file = new File(vcsDirectory, f);
+                    File file = new File(path.toFile(), f);
                     try {
                         if (!file.createNewFile()) {
                             vcs.delete();
-                            System.out.println("Failed to create " + pathBuilder(new String[] {f}, vcsDirectory, separator));
+                            System.out.println("Failed to create " + pathBuilder(new String[] {f}, path));
                             return null;
                         } else {
                             sub.put(f, file.toPath().toAbsolutePath().toString());
                         }
                     } catch (Exception e) {
                         vcs.delete();
-                        System.out.println("Failed to create " + pathBuilder(new String[] {f}, vcsDirectory, separator));
+                        System.out.println("Failed to create " + pathBuilder(new String[] {f}, path));
                         System.out.println(e.getMessage());
                         return null;
                     }
                 }
-                return new VersionControlSystem(dir, vcsDirectory, sub.get("HEAD"), sub.get("Index"), sub.get("Objects"));
+                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"));
             } else {
                 System.out.println("Unable to create " + vcs.toPath());
             }
@@ -91,45 +91,35 @@ public class VersionControlSystem {
     /**
      * Stages the changes made to a file and updates the index file accordingly
      * @param path: the path to the file to be added
-     * @param state: int, representing the state of the change. 0 for modified, 1 for added, 2 for removed
      */
     public void add(String path) {
         try {
-            File head = new File(this.head);
-            File index = new File(this.index);
+            readIndex();
             File file = new File(path);
-            String name = file.getName();
+            String name = this.currentDirectory.relativize(file.toPath()).toString();
             String hash = hash(path);
-            int state = 1;
-            BufferedReader br = new BufferedReader(new FileReader(head));
-            StringBuilder sb = new StringBuilder();
-            boolean exists = false;
-            String line;
-            if (br.readLine() != null) {
-                String lastHash = lastCommitHash(path);
-                if (lastHash != null) {
-                    // Some black magic fckery
-                }
-                // Some more black magic fckery
-            }
+            String lastHash = lastCommitHash(path);
             if (!file.exists()) {
-                System.out.println(String.format("File at %s does not exist", path));
-                return;
-            }
-            br = new BufferedReader(new FileReader(index));
-            while ((line = br.readLine()) != null) {
-                if (line.length() == name.length() + 43 && line.startsWith(name)) {  // space between name and hash, 40 character hash, space between hash and status, and 1 number status
-                    sb.append(String.format("%s %s %d", name, hash, state));
-                    exists = true;
+                if (lastHash != null) {
+                    this.indexMap.put(name, String.format("%s %d", hash, 2));
                 } else {
-                    sb.append(line);
+                    System.out.println(name + " does not exist");
+                    return;
                 }
-                sb.append("\n");
+            } else {
+                if (lastHash == null) {
+                    this.indexMap.put(name, String.format("%s %d", hash, 1));
+                } else if (lastHash.equals(hash)) {
+                    this.indexMap.remove(name);
+                } else {
+                    this.indexMap.put(name, String.format("%s %d", hash, 0));
+                }
+                createFile(path, hash);
             }
-            if (!exists) {
-                sb.append(String.format("%s %s %d", name, hash, state));
+            StringBuilder sb = new StringBuilder();
+            for (String key : this.indexMap.keySet()) {
+                sb.append(String.format("%s %s\n", key, indexMap.get(key)));
             }
-            createFile(path, hash);
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(index))) {
                 bw.write(sb.toString());
             } catch (Exception e) {
@@ -139,7 +129,21 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
-
+    private void readIndex() {
+        if (this.indexMap != null) {
+            return;
+        }
+        try {
+            this.indexMap = new HashMap<>();
+            BufferedReader br = new BufferedReader(new FileReader(index));
+            String line;
+            while ((line = br.readLine()) != null) {
+                this.indexMap.put(line.substring(0, line.length()-43), line.substring(line.length()-43));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     /**
      * Returns the hash of the file at the last commit
      * @param path: path to the file
@@ -153,14 +157,12 @@ public class VersionControlSystem {
      * @param paths: how to get to the desired destination, in the form of an array of strings
      * @return the desired path
      */
-    private static String pathBuilder(String[] paths, String start, String separator) {
-        StringBuilder output = new StringBuilder();
-        output.append(start);
-        for (String p : paths) {
-            output.append(separator);
-            output.append(p);
+    private static Path pathBuilder(String[] paths, Path start) {
+        Path output = start;
+        for (String path : paths) {
+            output = output.resolve(path);
         }
-        return output.toString();
+        return output;
     }
     /**
      * Returns the SHA-1 hash for a file
@@ -171,7 +173,7 @@ public class VersionControlSystem {
         try (FileInputStream fis = new FileInputStream(path)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] dataBytes = new byte[1024];
-            int bytesRead = 0;
+            int bytesRead;
 
             while ((bytesRead = fis.read(dataBytes)) != -1) {
                 md.update(dataBytes, 0, bytesRead);
@@ -194,7 +196,7 @@ public class VersionControlSystem {
      * @return boolean if the file is already saved.
      */
     public boolean hashExists(String hash) {
-        return Files.exists(Paths.get(pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, this.vcsDirectory, separator)));
+        return Files.exists(pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory));
     }
 
     /**
@@ -208,8 +210,8 @@ public class VersionControlSystem {
             return true;
         } else {
             Path source = Paths.get(path);
-            Path target = Paths.get(pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory, separator));
-            File bin = new File(pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory, separator));
+            Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
+            File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
             if (!bin.exists()) {
                 if (!bin.mkdir()) {
                     return false;
