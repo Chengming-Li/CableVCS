@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 public class VersionControlSystem {
     private final Path currentDirectory;
@@ -13,10 +14,11 @@ public class VersionControlSystem {
     private final File head;
     private final File index;
     private final Path objects;
+    private final File temp;
     private final String separator;
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects"};
-    private static final String[] files = {"HEAD", "Index"};
+    private static final String[] files = {"HEAD", "Index", "tempFile"};
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.separator = System.getProperty("file.separator");
@@ -24,14 +26,16 @@ public class VersionControlSystem {
         this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory).toFile();
         this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
         this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
+        this.temp = pathBuilder(new String[]{"tempFile"}, vcsDirectory).toFile();
     }
-    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects) {
+    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String tempFile) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = Paths.get(vcsDirectory);
         this.head = new File(head);
         this.index = new File(index);
         this.objects = Paths.get(objects);
         this.separator = System.getProperty("file.separator");
+        this.temp = new File(tempFile);
     }
     /**
      * The init command, creates a .vcs folder and subfolders to initialize version control system.
@@ -80,7 +84,7 @@ public class VersionControlSystem {
                         return null;
                     }
                 }
-                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"));
+                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"), sub.get("tempFile"));
             } else {
                 System.out.println("Unable to create " + vcs.toPath());
             }
@@ -129,6 +133,36 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
+    private File lastCommit() {
+        try {
+            List<String> path = Files.readAllLines(Paths.get(head.getAbsolutePath()));
+            if (path.size() == 0) {
+                return null;
+            }
+            return objects.resolve(path.get(0).substring(0, 2)).resolve(path.get(0).substring(2)).toFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    private File lastTree() {
+        try {
+            File commit = lastCommit();
+            if (commit == null) {
+                return null;
+            }
+            String path = Files.readAllLines(Paths.get(commit.getAbsolutePath())).get(0).substring(5);
+            return objects.resolve(path.substring(0, 2)).resolve(path.substring(2)).toFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    /**
+     * Reads the contents of Index file and converts it into a hashmap
+     * key: the relative path to the file
+     * value: [hash] [state]
+     */
     private void readIndex() {
         if (this.indexMap != null) {
             return;
@@ -151,6 +185,41 @@ public class VersionControlSystem {
      */
     private String lastCommitHash(String path) {
         return null;
+    }
+    public String makeTree() {
+        try {
+            readIndex();
+            StringBuilder sb = new StringBuilder();
+            File tree = lastTree();
+            if (tree == null) {
+                for (String path : this.indexMap.keySet()) {
+                    sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
+                }
+            } else {
+                BufferedReader br = new BufferedReader(new FileReader(tree));
+                String line;
+                String path;
+                while ((line = br.readLine()) != null) {
+                    path = line.split(" ")[0];
+                    if (this.indexMap.containsKey(path)) {
+                        if (!this.indexMap.get(path).substring(this.indexMap.get(path).length() - 1).equals("2")) {
+                            sb.append(line).append("\n");
+                        }
+                    } else {
+                        sb.append(line).append("\n");
+                    }
+                }
+            }
+            FileWriter fw = new FileWriter(temp, false);
+            fw.write(sb.toString());
+            fw.close();
+            String hash = hash(temp.getAbsolutePath());
+            createFile(temp.getAbsolutePath(), hash);
+            return hash;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
     /**
      * Returns a path to a file or directory given how to get there from currentDirectory
@@ -212,10 +281,8 @@ public class VersionControlSystem {
             Path source = Paths.get(path);
             Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
             File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
-            if (!bin.exists()) {
-                if (!bin.mkdir()) {
-                    return false;
-                }
+            if (!bin.exists() && !bin.mkdir()) {
+                return false;
             }
             try {
                 Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);

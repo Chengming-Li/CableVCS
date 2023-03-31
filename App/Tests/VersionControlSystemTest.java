@@ -2,7 +2,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.*;
-import java.util.Objects;
 
 class VersionControlSystemTest {
     private static final String testDir = "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\Test";
@@ -38,7 +37,23 @@ class VersionControlSystemTest {
             BufferedReader br = new BufferedReader(new FileReader(testDir +"\\.vcs\\Index"));
             String firstLine = String.format("%s %s 1", "testText.txt", vcs.hash(testDir +"\\testText.txt"));
             assertEquals(br.readLine(), firstLine);
-
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
+    void treeTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            FileWriter writer;
+            for (int i = 0; i < 5; i++) {
+                writer = new FileWriter(testDir +"\\testText" + i +".txt");
+                writer.write("This is some nice text, yada" + i);
+                writer.close();
+                vcs.add(testDir +"\\testText" + i +".txt");
+            }
+            assertEquals(vcs.makeTree(), vcs.hash(testDir +"\\.vcs\\tempFile"));
         } catch (Exception e) {
             e.printStackTrace();
             fail();
