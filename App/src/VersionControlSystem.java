@@ -7,6 +7,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class VersionControlSystem {
     private final Path currentDirectory;
@@ -103,7 +105,7 @@ public class VersionControlSystem {
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
             String hash = hash(file);
-            String lastHash = lastCommitHash(path);
+            String lastHash = lastCommitHash(name);
             if (!file.exists()) {
                 if (lastHash != null) {
                     this.indexMap.put(name, String.format("%s %d", hash, 2));
@@ -130,6 +132,38 @@ public class VersionControlSystem {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void commit(String message, String user) {
+        if (this.indexMap == null) {
+            System.out.println("No changes added to the commit");
+            return;
+        } else if (message.length() == 0) {
+            System.out.println("Please enter a commit message.");
+            return;
+        }
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append(makeTree()).append("\n");
+            List<String> path = Files.readAllLines(Paths.get(head.getAbsolutePath()));
+            if (path.size() == 0) {
+                sb.append("null");
+            } else {
+                sb.append(path.get(0));
+            }
+            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"));
+            sb.append("\n").append(message).append("\n").append(time).append("\n").append(user);
+            String hash = hash(sb.toString());
+            createFile(sb.toString(), hash);
+            FileWriter fw = new FileWriter(this.head, false);
+            fw.write(hash);
+            fw.close();
+            this.indexMap = null;
+            fw = new FileWriter(this.index, false);
+            fw.write("");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -162,7 +196,7 @@ public class VersionControlSystem {
             if (commit == null) {
                 return null;
             }
-            String path = Files.readAllLines(Paths.get(commit.getAbsolutePath())).get(0).substring(5);
+            String path = Files.readAllLines(Paths.get(commit.getAbsolutePath())).get(0);
             return objects.resolve(path.substring(0, 2)).resolve(path.substring(2)).toFile();
         } catch (Exception e) {
             e.printStackTrace();
@@ -197,6 +231,20 @@ public class VersionControlSystem {
      * @return string of the hash of the file in the last commit, or null if the file isn't in the last commit
      */
     private String lastCommitHash(String path) {
+        try {
+            File lt = lastTree();
+            if (lt != null) {
+                BufferedReader br = new BufferedReader(new FileReader(lt));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.startsWith(path)) {
+                        return line.substring(path.length()+1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -221,7 +269,7 @@ public class VersionControlSystem {
                     path = line.split(" ")[0];
                     if (this.indexMap.containsKey(path)) {
                         if (!this.indexMap.get(path).substring(this.indexMap.get(path).length() - 1).equals("2")) {
-                            sb.append(line).append("\n");
+                            sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
                         }
                     } else {
                         sb.append(line).append("\n");
