@@ -37,6 +37,7 @@ public class VersionControlSystem {
         this.separator = System.getProperty("file.separator");
         this.temp = new File(tempFile);
     }
+
     /**
      * The init command, creates a .vcs folder and subfolders to initialize version control system.
      * If a .vcs folder already exists, do nothing
@@ -101,7 +102,7 @@ public class VersionControlSystem {
             readIndex();
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
-            String hash = hash(path);
+            String hash = hash(file);
             String lastHash = lastCommitHash(path);
             if (!file.exists()) {
                 if (lastHash != null) {
@@ -118,7 +119,7 @@ public class VersionControlSystem {
                 } else {
                     this.indexMap.put(name, String.format("%s %d", hash, 0));
                 }
-                createFile(path, hash);
+                createFile(file, hash);
             }
             StringBuilder sb = new StringBuilder();
             for (String key : this.indexMap.keySet()) {
@@ -133,6 +134,11 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Returns the File of the last commit, based on what is stored in the head file
+     * @return null if there is no last commit, the File of the last commit otherwise
+     */
     private File lastCommit() {
         try {
             List<String> path = Files.readAllLines(Paths.get(head.getAbsolutePath()));
@@ -145,6 +151,11 @@ public class VersionControlSystem {
             return null;
         }
     }
+
+    /**
+     * Returns the File of the tree in the last commit
+     * @return null if there was no previous commit, the File object otherwise
+     */
     private File lastTree() {
         try {
             File commit = lastCommit();
@@ -158,6 +169,7 @@ public class VersionControlSystem {
             return null;
         }
     }
+
     /**
      * Reads the contents of Index file and converts it into a hashmap
      * key: the relative path to the file
@@ -178,6 +190,7 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
+
     /**
      * Returns the hash of the file at the last commit
      * @param path: path to the file
@@ -186,6 +199,11 @@ public class VersionControlSystem {
     private String lastCommitHash(String path) {
         return null;
     }
+
+    /**
+     * Creates a tree file, which is the contents of the last tree but with changes based on the files staged
+     * @return hash of the new tree file
+     */
     public String makeTree() {
         try {
             readIndex();
@@ -210,17 +228,15 @@ public class VersionControlSystem {
                     }
                 }
             }
-            FileWriter fw = new FileWriter(temp, false);
-            fw.write(sb.toString());
-            fw.close();
-            String hash = hash(temp.getAbsolutePath());
-            createFile(temp.getAbsolutePath(), hash);
+            String hash = hash(sb.toString());
+            createFile(sb.toString(), hash);
             return hash;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
+
     /**
      * Returns a path to a file or directory given how to get there from currentDirectory
      * @param paths: how to get to the desired destination, in the form of an array of strings
@@ -233,12 +249,13 @@ public class VersionControlSystem {
         }
         return output;
     }
+
     /**
      * Returns the SHA-1 hash for a file
      * @param path: path to the file
      * @return returns the string hash for the file
      */
-    public String hash(String path) {
+    public String hash(File path) {
         try (FileInputStream fis = new FileInputStream(path)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] dataBytes = new byte[1024];
@@ -258,6 +275,21 @@ public class VersionControlSystem {
             return null;
         }
     }
+    public String hash(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(input.getBytes());
+            byte[] hashBytes = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * Checks if a file with the hash as the name is already saved
@@ -274,11 +306,11 @@ public class VersionControlSystem {
      * @param hash: the hashcode of the file, for naming and bin assignment purposes
      * @return boolean whether the creation was successful or not
      */
-    public boolean createFile(String path, String hash) {
+    public boolean createFile(File path, String hash) {
         if (hashExists(hash)) {
             return true;
         } else {
-            Path source = Paths.get(path);
+            Path source = path.toPath();
             Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
             File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
             if (!bin.exists() && !bin.mkdir()) {
@@ -292,6 +324,35 @@ public class VersionControlSystem {
                 return false;
             }
         }
+    }
+    public boolean createFile(String contents, String hash) {
+        if (hashExists(hash)) {
+            return true;
+        } else {
+            Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
+            File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
+            if (!bin.exists() && !bin.mkdir()) {
+                return false;
+            }
+            try {
+                FileWriter writer = new FileWriter(target.toFile());
+                writer.write(contents);
+                writer.close();
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Returns the file for the hash
+     * @param hash: hash of the file
+     * @return file object
+     */
+    public File getHashedFile(String hash) {
+        return pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory).toFile();
     }
 }
 
