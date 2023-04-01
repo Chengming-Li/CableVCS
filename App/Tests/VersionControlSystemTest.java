@@ -77,7 +77,7 @@ class VersionControlSystemTest {
                 vcs.add(TESTDIR +"\\testText" + i +".txt");
             }
             Path indexPath = Paths.get(VCSDIR + "\\Index");
-            Path headPath = Paths.get(VCSDIR + "\\HEAD");
+            Path headPath = Paths.get(VCSDIR + "\\Branches\\Master");
             assertEquals(5, Files.readAllLines(indexPath).size());
             vcs.commit("Test Commit", "User");
             assertEquals(0, Files.readAllLines(indexPath).size());
@@ -110,7 +110,7 @@ class VersionControlSystemTest {
             vcs.add(TESTDIR +"\\testText.txt");
             vcs.remove(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
-            Path path = Paths.get(VCSDIR + "\\HEAD");
+            Path path = Paths.get(VCSDIR + "\\Branches\\Master");
             List<String> HEAD = Files.readAllLines(path);
             assertEquals(0, HEAD.size());
             vcs.add(TESTDIR +"\\testText.txt");

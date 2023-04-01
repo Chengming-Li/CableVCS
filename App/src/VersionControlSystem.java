@@ -16,11 +16,11 @@ public class VersionControlSystem {
     private final File head;
     private final File index;
     private final Path objects;
-    private final File temp;
+    private final Path branches;
     private final String separator;
     private Map<String, String> indexMap;
-    private static final String[] subDirectories = {"Objects"};
-    private static final String[] files = {"HEAD", "Index", "tempFile"};
+    private static final String[] subDirectories = {"Objects", "Branches"};
+    private static final String[] files = {"HEAD", "Index"};
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.separator = System.getProperty("file.separator");
@@ -28,16 +28,16 @@ public class VersionControlSystem {
         this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory).toFile();
         this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
         this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
-        this.temp = pathBuilder(new String[]{"tempFile"}, vcsDirectory).toFile();
+        this.branches = pathBuilder(new String[]{"Branches"}, vcsDirectory);
     }
-    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String tempFile) {
+    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = Paths.get(vcsDirectory);
         this.head = new File(head);
         this.index = new File(index);
         this.objects = Paths.get(objects);
         this.separator = System.getProperty("file.separator");
-        this.temp = new File(tempFile);
+        this.branches = pathBuilder(new String[]{"Branches"}, this.vcsDirectory);
     }
 
     /**
@@ -87,7 +87,19 @@ public class VersionControlSystem {
                         return null;
                     }
                 }
-                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"), sub.get("tempFile"));
+                File file = new File(path.resolve("Branches").toFile(), "Master");
+                try {
+                    if (!file.createNewFile()) {
+                        System.out.println("Failed to create " + file.getAbsolutePath());
+                    } else {
+                        FileWriter writer = new FileWriter(sub.get("HEAD"));
+                        writer.write(path.resolve("Branches").resolve("Master").toString());
+                        writer.close();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"));
             } else {
                 System.out.println("Unable to create " + vcs.toPath());
             }
@@ -158,7 +170,7 @@ public class VersionControlSystem {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append(makeTree()).append("\n");
-            List<String> path = Files.readAllLines(Paths.get(head.getAbsolutePath()));
+            List<String> path = Files.readAllLines(Paths.get(getHeadPath().getAbsolutePath()));
             if (path.size() == 0) {
                 sb.append("null");
             } else {
@@ -168,7 +180,7 @@ public class VersionControlSystem {
             sb.append("\n").append(time).append("\n").append(user).append("\n").append(message);
             String hash = hash(sb.toString());
             createFile(sb.toString(), hash);
-            FileWriter fw = new FileWriter(this.head, false);
+            FileWriter fw = new FileWriter(getHeadPath(), false);
             fw.write(hash);
             fw.close();
             this.indexMap = null;
@@ -214,14 +226,21 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
-
+    private File getHeadPath() {
+        try {
+            return new File(Files.readAllLines((this.head.toPath())).get(0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     /**
      * Returns the File of the last commit, based on what is stored in the head file
      * @return null if there is no last commit, the File of the last commit otherwise
      */
     private File lastCommit() {
         try {
-            List<String> path = Files.readAllLines((head.toPath()));
+            List<String> path = Files.readAllLines(getHeadPath().toPath());
             if (path.size() == 0) {
                 return null;
             }
