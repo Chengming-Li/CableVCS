@@ -122,6 +122,7 @@ class VersionControlSystemTest {
             vcs.remove(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
             assertFalse(new File(TESTDIR +"\\testText.txt").exists());
+            vcs.remove(TESTDIR +"\\testText.txt");
         } catch (Exception e) {
             e.printStackTrace();
             fail();

@@ -190,7 +190,11 @@ public class VersionControlSystem {
             String name = this.currentDirectory.relativize(file.toPath()).toString();
             String lastHash = lastCommitHash(name);
             if (lastHash == null) {
-                this.indexMap.remove(name);
+                if (this.indexMap.containsKey(name)) {
+                    this.indexMap.remove(name);
+                } else {
+                    System.out.println("No reason to remove the file");
+                }
             } else {
                 this.indexMap.put(name, String.format("%s %d", lastHash, 2));
                 if (file.exists()) {
