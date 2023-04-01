@@ -148,7 +148,7 @@ public class VersionControlSystem {
      * @param user: string, the author of the commit
      */
     public void commit(String message, String user) {
-        if (this.indexMap == null) {
+        if (this.indexMap == null || this.indexMap.keySet().size() == 0) {
             System.out.println("No changes added to the commit");
             return;
         } else if (message.length() == 0) {
@@ -174,6 +174,38 @@ public class VersionControlSystem {
             this.indexMap = null;
             fw = new FileWriter(this.index, false);
             fw.write("");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Unstages the file if the file is untracked, otherwise mark the file to be removed, and delete the file if it hasn't been deleted already.
+     * @param path: path to the file
+     */
+    public void remove(String path) {
+        try {
+            readIndex();
+            File file = new File(path);
+            String name = this.currentDirectory.relativize(file.toPath()).toString();
+            String lastHash = lastCommitHash(name);
+            if (lastHash == null) {
+                this.indexMap.remove(name);
+            } else {
+                this.indexMap.put(name, String.format("%s %d", lastHash, 2));
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+            StringBuilder sb = new StringBuilder();
+            for (String key : this.indexMap.keySet()) {
+                sb.append(String.format("%s %s\n", key, indexMap.get(key)));
+            }
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(index))) {
+                bw.write(sb.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

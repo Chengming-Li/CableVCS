@@ -100,6 +100,33 @@ class VersionControlSystemTest {
             fail();
         }
     }
+    @org.junit.jupiter.api.Test
+    void removeTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            FileWriter writer = new FileWriter(TESTDIR +"\\testText.txt");
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(TESTDIR +"\\testText.txt");
+            vcs.remove(TESTDIR +"\\testText.txt");
+            vcs.commit("Test", "User");
+            Path path = Paths.get(VCSDIR + "\\HEAD");
+            List<String> HEAD = Files.readAllLines(path);
+            assertEquals(0, HEAD.size());
+            vcs.add(TESTDIR +"\\testText.txt");
+            vcs.commit("Test", "User");
+            writer = new FileWriter(TESTDIR +"\\testText.txt");
+            writer.write("This is some more nice text");
+            writer.close();
+            vcs.add(TESTDIR +"\\testText.txt");
+            vcs.remove(TESTDIR +"\\testText.txt");
+            vcs.commit("Test", "User");
+            assertFalse(new File(TESTDIR +"\\testText.txt").exists());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();
         assert files != null;
