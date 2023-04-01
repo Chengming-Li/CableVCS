@@ -137,6 +137,16 @@ public class VersionControlSystem {
         }
     }
 
+    /**
+     * Creates a commit, which includes 5 lines:
+     *  [tree]
+     *  [previous commit]
+     *  [time]
+     *  [author]
+     *  [message]
+     * @param message: string, message for the commit
+     * @param user: string, the author of the commit
+     */
     public void commit(String message, String user) {
         if (this.indexMap == null) {
             System.out.println("No changes added to the commit");
@@ -154,8 +164,8 @@ public class VersionControlSystem {
             } else {
                 sb.append(path.get(0));
             }
-            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"));
-            sb.append("\n").append(message).append("\n").append(time).append("\n").append(user);
+            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss"));
+            sb.append("\n").append(time).append("\n").append(user).append("\n").append(message);
             String hash = hash(sb.toString());
             createFile(sb.toString(), hash);
             FileWriter fw = new FileWriter(this.head, false);
@@ -175,7 +185,7 @@ public class VersionControlSystem {
      */
     private File lastCommit() {
         try {
-            List<String> path = Files.readAllLines(Paths.get(head.getAbsolutePath()));
+            List<String> path = Files.readAllLines((head.toPath()));
             if (path.size() == 0) {
                 return null;
             }
@@ -345,7 +355,7 @@ public class VersionControlSystem {
      * @return boolean if the file is already saved.
      */
     public boolean hashExists(String hash) {
-        return Files.exists(pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory));
+        return Files.exists(getHashedFile(hash).toPath());
     }
 
     /**
@@ -359,8 +369,8 @@ public class VersionControlSystem {
             return true;
         } else {
             Path source = path.toPath();
-            Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
-            File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
+            Path target = getHashedFile(hash).toPath();
+            File bin = target.getParent().toFile();
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
             }
@@ -377,13 +387,13 @@ public class VersionControlSystem {
         if (hashExists(hash)) {
             return true;
         } else {
-            Path target = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory);
-            File bin = pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2)}, vcsDirectory).toFile();
+            File target = getHashedFile(hash);;
+            File bin = target.getParentFile();
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
             }
             try {
-                FileWriter writer = new FileWriter(target.toFile());
+                FileWriter writer = new FileWriter(target);
                 writer.write(contents);
                 writer.close();
                 return true;

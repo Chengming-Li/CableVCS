@@ -83,19 +83,18 @@ class VersionControlSystemTest {
             assertEquals(0, Files.readAllLines(indexPath).size());
             assertEquals(Files.readAllLines(headPath).size(), 1);
             File firstCommit = vcs.getHashedFile(Files.readAllLines(headPath).get(0));
+            String firstCommitHash = Files.readAllLines(headPath).get(0);
             assertTrue(firstCommit.exists());
             List<String> firstCommitContents = Files.readAllLines(firstCommit.toPath());
             writer = new FileWriter(TESTDIR +"\\testText0.txt", false);
             writer.write("This is some nice text, yada dabba doo");
             writer.close();
             vcs.add(TESTDIR +"\\testText0.txt");
-            System.out.println(vcs.hash("This is some nice text, yada dabba doo"));
             vcs.commit("Second Commit", "User");
             File secondCommit = vcs.getHashedFile(Files.readAllLines(headPath).get(0));
             List<String> secondCommitContents = Files.readAllLines(secondCommit.toPath());
-            System.out.println(firstCommitContents);
-            System.out.println(secondCommitContents);
-            assertNotEquals(firstCommitContents, secondCommitContents);
+            assertEquals(secondCommitContents.get(1), firstCommitHash);
+            assertNotEquals(firstCommitContents.get(0), secondCommitContents.get(0));
         } catch (Exception e) {
             e.printStackTrace();
             fail();
