@@ -138,15 +138,29 @@ class VersionControlSystemTest {
                 writer.write("This is some nice text, yada" + i);
                 writer.close();
                 vcs.add(TESTDIR +"\\testText" + i +".txt");
+                vcs.commit(""+i, "User");
             }
-            vcs.commit("Test Commit", "User");
-            writer = new FileWriter(TESTDIR +"\\testText0.txt", false);
-            writer.write("This is some nice text, yada dabba doo");
-            writer.close();
-            vcs.add(TESTDIR +"\\testText0.txt");
-            vcs.commit("Second Commit", "User");
             System.out.println(vcs.log());
-            assertTrue(vcs.log().length() > 0);
+            assertEquals(5, vcs.log().split("===").length-1);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
+    void globalLogTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            FileWriter writer;
+            for (int i = 0; i < 5; i++) {
+                writer = new FileWriter(TESTDIR +"\\testText" + i +".txt");
+                writer.write("This is some nice text, yada" + i);
+                writer.close();
+                vcs.add(TESTDIR +"\\testText" + i +".txt");
+                vcs.commit(""+i, "User");
+            }
+            System.out.println(vcs.globalLog());
+            assertEquals(5, vcs.log().split("===").length-1);
         } catch (Exception e) {
             e.printStackTrace();
             fail();

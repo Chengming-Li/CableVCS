@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class VersionControlSystem {
     private final Path currentDirectory;
@@ -19,6 +20,7 @@ public class VersionControlSystem {
     private final Path objects;
     private final Path branches;
     private final String separator;
+    private String branch;
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
@@ -31,6 +33,7 @@ public class VersionControlSystem {
         this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
         this.branches = pathBuilder(new String[]{"Branches"}, vcsDirectory);
         this.AllCommits = pathBuilder(new String[]{"AllCommits"}, vcsDirectory).toFile();
+        this.branch = Objects.requireNonNull(getHeadPath()).getName();
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
@@ -41,6 +44,7 @@ public class VersionControlSystem {
         this.separator = System.getProperty("file.separator");
         this.branches = pathBuilder(new String[]{"Branches"}, this.vcsDirectory);
         this.AllCommits = new File(AllCommits);
+        this.branch = Objects.requireNonNull(getHeadPath()).getName();
     }
 
     /**
@@ -183,7 +187,7 @@ public class VersionControlSystem {
                 sb.append(path.get(0));
             }
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss"));
-            sb.append("\n").append(time).append("\n").append(user).append("\n").append(message);
+            sb.append("\n").append(time).append("\n").append(user).append("\n").append(this.branch).append("\n").append(message);
             String hash = hash(sb.toString());
             createFile(sb.toString(), hash);
             FileWriter fw = new FileWriter(getHeadPath(), false);
@@ -237,6 +241,15 @@ public class VersionControlSystem {
         }
     }
 
+    /**
+     * returns the current commit and all its ancestors
+     * ===
+     * commit [hash]
+     * Date: [MM/DD/YYYY] [hh/dd/ss]
+     * Author: [author]
+     * [message]
+     * @return a string of all the commits
+     */
     public String log() {
         try {
             File lastCommit = lastCommit();
@@ -247,10 +260,24 @@ public class VersionControlSystem {
             StringBuilder sb = new StringBuilder();
             String hash = Files.readAllLines(headPath.toPath()).get(0);
             while (hash.length() != 0) {
-                hash = printCommit(hash, sb);
+                hash = printCommit(hash, sb, false);
             }
             return sb.toString();
         } catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String globalLog() {
+        try {
+            StringBuilder sb = new StringBuilder();
+            List<String> hashes = Files.readAllLines(this.AllCommits.toPath());
+            for (int i = hashes.size()-1; i >= 0; i--) {
+                printCommit(hashes.get(i), sb, true);
+            }
+            return sb.toString();
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -513,10 +540,14 @@ public class VersionControlSystem {
      * @param sb: string builder object
      * @return hash of the next commit
      */
-    private String printCommit(String hash, StringBuilder sb) {
+    private String printCommit(String hash, StringBuilder sb, boolean global) {
         try {
             List<String> path = Files.readAllLines(getHashedFile(hash).toPath());
-            sb.append(String.format("\n===\ncommit %s\nDate: %s\nAuthor: %s\n%s\n", hash, path.get(2), path.get(3), path.get(4)));
+            sb.append(String.format("===\ncommit %s\nDate: %s\nAuthor: %s\n", hash, path.get(2), path.get(3)));
+            if (global){
+                sb.append("Branch: ").append(path.get(4)).append("\n");
+            }
+            sb.append(path.get(5)).append("\n");
             return path.get(1);
         } catch (Exception e) {
             e.printStackTrace();
