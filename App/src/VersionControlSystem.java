@@ -15,12 +15,13 @@ public class VersionControlSystem {
     private final Path vcsDirectory;
     private final File head;
     private final File index;
+    private final File AllCommits;
     private final Path objects;
     private final Path branches;
     private final String separator;
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
-    private static final String[] files = {"HEAD", "Index"};
+    private static final String[] files = {"HEAD", "Index", "AllCommits"};
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.separator = System.getProperty("file.separator");
@@ -29,8 +30,9 @@ public class VersionControlSystem {
         this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
         this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
         this.branches = pathBuilder(new String[]{"Branches"}, vcsDirectory);
+        this.AllCommits = pathBuilder(new String[]{"AllCommits"}, vcsDirectory).toFile();
     }
-    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects) {
+    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = Paths.get(vcsDirectory);
         this.head = new File(head);
@@ -38,6 +40,7 @@ public class VersionControlSystem {
         this.objects = Paths.get(objects);
         this.separator = System.getProperty("file.separator");
         this.branches = pathBuilder(new String[]{"Branches"}, this.vcsDirectory);
+        this.AllCommits = new File(AllCommits);
     }
 
     /**
@@ -99,7 +102,7 @@ public class VersionControlSystem {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"));
+                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
             } else {
                 System.out.println("Unable to create " + vcs.toPath());
             }
@@ -168,12 +171,15 @@ public class VersionControlSystem {
             return;
         }
         try {
+            File headPath = getHeadPath();
+            if (headPath == null) {
+                System.out.println("Unable to get head pointer");
+                return;
+            }
             StringBuilder sb = new StringBuilder();
             sb.append(makeTree()).append("\n");
-            List<String> path = Files.readAllLines(Paths.get(getHeadPath().getAbsolutePath()));
-            if (path.size() == 0) {
-                sb.append("null");
-            } else {
+            List<String> path = Files.readAllLines(headPath.toPath());
+            if (path.size() != 0) {
                 sb.append(path.get(0));
             }
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss"));
@@ -186,6 +192,10 @@ public class VersionControlSystem {
             this.indexMap = null;
             fw = new FileWriter(this.index, false);
             fw.write("");
+            fw.close();
+            fw = new FileWriter(this.AllCommits, true);
+            fw.write(hash + "\n");
+            fw.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -226,6 +236,30 @@ public class VersionControlSystem {
             e.printStackTrace();
         }
     }
+
+    public String log() {
+        try {
+            File lastCommit = lastCommit();
+            File headPath = getHeadPath();
+            if (lastCommit == null || headPath == null) {
+                return "";
+            }
+            StringBuilder sb = new StringBuilder();
+            String hash = Files.readAllLines(headPath.toPath()).get(0);
+            while (hash.length() != 0) {
+                hash = printCommit(hash, sb);
+            }
+            return sb.toString();
+        } catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Returns the file of the head branch pointer
+     * @return file object pointing to head commit
+     */
     private File getHeadPath() {
         try {
             return new File(Files.readAllLines((this.head.toPath())).get(0));
@@ -234,13 +268,18 @@ public class VersionControlSystem {
             return null;
         }
     }
+
     /**
      * Returns the File of the last commit, based on what is stored in the head file
      * @return null if there is no last commit, the File of the last commit otherwise
      */
     private File lastCommit() {
         try {
-            List<String> path = Files.readAllLines(getHeadPath().toPath());
+            File headPath = getHeadPath();
+            if (headPath == null) {
+                return null;
+            }
+            List<String> path = Files.readAllLines(headPath.toPath());
             if (path.size() == 0) {
                 return null;
             }
@@ -442,7 +481,7 @@ public class VersionControlSystem {
         if (hashExists(hash)) {
             return true;
         } else {
-            File target = getHashedFile(hash);;
+            File target = getHashedFile(hash);
             File bin = target.getParentFile();
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
@@ -466,6 +505,23 @@ public class VersionControlSystem {
      */
     public File getHashedFile(String hash) {
         return pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory).toFile();
+    }
+
+    /**
+     * Adds the formatted commit logs to the string builder and returns the hash of the next commit
+     * @param hash: hash of the commit
+     * @param sb: string builder object
+     * @return hash of the next commit
+     */
+    private String printCommit(String hash, StringBuilder sb) {
+        try {
+            List<String> path = Files.readAllLines(getHashedFile(hash).toPath());
+            sb.append(String.format("\n===\ncommit %s\nDate: %s\nAuthor: %s\n%s\n", hash, path.get(2), path.get(3), path.get(4)));
+            return path.get(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
 
