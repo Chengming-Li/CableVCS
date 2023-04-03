@@ -3,6 +3,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 public class Commit extends VCSUtils {
     public final String hash;
@@ -38,6 +39,14 @@ public class Commit extends VCSUtils {
     public Commit parentCommit() {
         if ("".equals(lastHash)) {
             return null;
+        }
+        return findCommit(hash, this.vcsDirectory);
+    }
+    public Commit parentCommit(Map<String, Commit> cache) {
+        if ("".equals(lastHash)) {
+            return null;
+        } else if (cache.containsKey(lastHash)) {
+            return cache.get(lastHash);
         }
         return findCommit(hash, this.vcsDirectory);
     }
@@ -80,15 +89,22 @@ public class Commit extends VCSUtils {
         }
     }
 
-    public static Commit writeCommit(String user, String message, Path vcsDirectory, Commit current) {
+    public static Commit writeCommit(String user, String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch) {
         StringBuilder sb = new StringBuilder();
-        Tree tree = Tree.makeTree(vcsDirectory);
+        Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");
-        sb.append(current.hash).append("\n");
         String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss"));
-        sb.append(time).append("\n").append(user).append("\n").append(current.branch).append("\n").append(message);
+        String lastHash;
+        if (current == null) {
+            sb.append("").append("\n");
+            lastHash = "";
+        } else {
+            sb.append(current.hash).append("\n");
+            lastHash = current.hash;
+        }
+        sb.append(time).append("\n").append(user).append("\n").append(branch).append("\n").append(message);
         String hash = hash(sb.toString());
         createFile(sb.toString(), hash, vcsDirectory);
-        return new Commit(hash, tree.hash, current.hash, time, user, current.branch, message, vcsDirectory, tree);
+        return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree);
     }
 }

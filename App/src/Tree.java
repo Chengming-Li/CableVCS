@@ -27,7 +27,34 @@ public class Tree extends VCSUtils{
             return null;
         }
     }
-    public static Tree makeTree(Path vcsDirectory) {
-        return null;
+    public static Tree makeTree(Path vcsDirectory, Map<String, String> index, Commit commit) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            Map<String, String> map;
+            if (commit == null) {
+                map = new HashMap<>();
+                for (String path : index.keySet()) {
+                    map.put(path, index.get(path).substring(0, index.get(path).length()-2));
+                }
+            } else {
+                map = new HashMap<>(commit.getTree().map);
+                for (String key : index.keySet()) {
+                    if (index.get(key).endsWith("2")) {
+                        map.remove(key);
+                    } else {
+                        map.put(key, index.get(key).substring(0, index.get(key).length()-2));
+                    }
+                }
+            }
+            for (String key : map.keySet()) {
+                sb.append(String.format("%s %s\n", key, map.get(key)));
+            }
+            String hash = hash(sb.toString());
+            createFile(sb.toString(), hash, vcsDirectory);
+            return new Tree(hash, map);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

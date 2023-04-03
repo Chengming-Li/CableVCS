@@ -2,10 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.util.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.stream.Stream;
 
 public class VersionControlSystem extends VCSUtils {
@@ -21,6 +18,7 @@ public class VersionControlSystem extends VCSUtils {
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
+    private Map<String, Commit> commitCache;
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
@@ -29,8 +27,14 @@ public class VersionControlSystem extends VCSUtils {
         this.objects = this.vcsDirectory.resolve("Objects");
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();;
-        this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        commitCache = new HashMap<>();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
+        if (lastCommit != null) {
+            commitCache.put(lastCommit.hash, lastCommit);
+            this.branch = lastCommit.branch;
+        } else {
+            this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        }
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
@@ -40,8 +44,14 @@ public class VersionControlSystem extends VCSUtils {
         this.objects = Paths.get(objects);
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = new File(AllCommits);
-        this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        commitCache = new HashMap<>();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
+        if (lastCommit != null) {
+            commitCache.put(lastCommit.hash, lastCommit);
+            this.branch = lastCommit.branch;
+        } else {
+            this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        }
     }
 
     /**
@@ -121,7 +131,10 @@ public class VersionControlSystem extends VCSUtils {
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
             String hash = hash(file);
-            String lastHash = lastCommit.getTree().map.getOrDefault(name, null);
+            String lastHash = null;
+            if (lastCommit != null) {
+                lastHash = lastCommit.getTree().map.getOrDefault(name, null);
+            }
             if (!file.exists()) {
                 if (lastHash != null) {
                     this.indexMap.put(name, String.format("________________________________________ %d", hash, 2));
@@ -170,8 +183,10 @@ public class VersionControlSystem extends VCSUtils {
             return;
         }
         try {
-            this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit);
-            FileWriter fw = new FileWriter(getHeadPath(), false);
+            readIndex();
+            this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch);
+            commitCache.put(lastCommit.hash, lastCommit);
+            FileWriter fw = new FileWriter(Objects.requireNonNull(getHeadPath()), false);
             fw.write(lastCommit.hash);
             fw.close();
             this.indexMap = null;
@@ -195,7 +210,7 @@ public class VersionControlSystem extends VCSUtils {
             readIndex();
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
-            if (lastCommit.getTree().map.getOrDefault(name, null) == null) {
+            if (lastCommit == null || lastCommit.getTree().map.getOrDefault(name, null) == null) {
                 if (this.indexMap.containsKey(name)) {
                     this.indexMap.remove(name);
                 } else {
@@ -211,11 +226,9 @@ public class VersionControlSystem extends VCSUtils {
             for (String key : this.indexMap.keySet()) {
                 sb.append(String.format("%s %s\n", key, indexMap.get(key)));
             }
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(index))) {
-                bw.write(sb.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            FileWriter writer = new FileWriter(index);
+            writer.write(sb.toString());
+            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -231,28 +244,28 @@ public class VersionControlSystem extends VCSUtils {
      * @return a string of all the commits
      */
     public String log() {
-        try {
-            File headPath = getHeadPath();
-            if (lastCommit == null || headPath == null) {
-                return "";
+        StringBuilder sb = new StringBuilder();
+        Commit c = lastCommit;
+        while (c != null) {
+            if (!commitCache.containsKey(c.hash)) {
+                commitCache.put(c.hash, c);
             }
-            StringBuilder sb = new StringBuilder();
-            String hash = Files.readAllLines(headPath.toPath()).get(0);
-            while (hash.length() != 0) {
-                hash = printCommit(hash, sb, false);
-            }
-            return sb.toString();
-        } catch (Exception e){
-            e.printStackTrace();
-            return null;
+            sb.append(c.toString(false));
+            c = c.parentCommit(this.commitCache);
         }
+        return sb.toString();
     }
     public String globalLog() {
         try {
             StringBuilder sb = new StringBuilder();
-            List<String> hashes = Files.readAllLines(this.AllCommits.toPath());
-            for (int i = hashes.size()-1; i >= 0; i--) {
-                printCommit(hashes.get(i), sb, true);
+            BufferedReader reader = new BufferedReader(new FileReader(AllCommits));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (commitCache.containsKey(line)) {
+                    sb.append(commitCache.get(line).toString(true));
+                } else {
+                    sb.append(Objects.requireNonNull(Commit.findCommit(line, vcsDirectory)).toString(true));
+                }
             }
             return sb.toString();
         } catch (Exception e) {
@@ -291,7 +304,7 @@ public class VersionControlSystem extends VCSUtils {
                     line = indexMap.get(p);
                     if (line.endsWith("2")) {
                         untracked.add(p);
-                    } else if (line.startsWith(hash(path.toFile()))){
+                    } else if (line.startsWith(Objects.requireNonNull(hash(path.toFile())))){
                         staged.add(p);
                     } else {
                         modified.add(p + " (modified)");
@@ -380,61 +393,6 @@ public class VersionControlSystem extends VCSUtils {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Creates a tree file, which is the contents of the last tree but with changes based on the files staged
-     * @return hash of the new tree file
-     */
-    public String makeTree() {
-        try {
-            readIndex();
-            StringBuilder sb = new StringBuilder();
-            if (lastCommit == null) {
-                for (String path : this.indexMap.keySet()) {
-                    sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
-                }
-            } else {
-                Map<String, String> map = new HashMap<>(lastCommit.getTree().map);
-                for (String key : indexMap.keySet()) {
-                    if (indexMap.get(key).endsWith("2")) {
-                        map.remove(key);
-                    } else {
-                        map.put(key, indexMap.get(key).substring(0, indexMap.get(key).length()-2));
-                    }
-                }
-                for (String key : map.keySet()) {
-                    sb.append(String.format("%s %s\n", key, map.get(key)));
-                }
-            }
-            String hash = hash(sb.toString());
-            createFile(sb.toString(), hash, vcsDirectory);
-            return hash;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Adds the formatted commit logs to the string builder and returns the hash of the next commit
-     * @param hash: hash of the commit
-     * @param sb: string builder object
-     * @return hash of the next commit
-     */
-    private String printCommit(String hash, StringBuilder sb, boolean global) {
-        try {
-            List<String> path = Files.readAllLines(findHash(hash, vcsDirectory));
-            sb.append(String.format("===\ncommit %s\nDate: %s\nAuthor: %s\n", hash, path.get(2), path.get(3)));
-            if (global){
-                sb.append("Branch: ").append(path.get(4)).append("\n");
-            }
-            sb.append(path.get(5)).append("\n");
-            return path.get(1);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 }

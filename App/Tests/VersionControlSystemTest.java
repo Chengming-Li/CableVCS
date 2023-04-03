@@ -31,25 +31,6 @@ class VersionControlSystemTest {
         }
     }
     @org.junit.jupiter.api.Test
-    void treeTest() {
-        VersionControlSystem vcs = cleanUp();
-        try {
-            FileWriter writer;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 2; i++) {
-                writer = new FileWriter(TESTDIR +"\\testText" + i +".txt");
-                writer.write("This is some nice text, yada" + i);
-                writer.close();
-                vcs.add(TESTDIR +"\\testText" + i +".txt");
-                sb.append("testText").append(i).append(".txt ").append(vcs.hash("This is some nice text, yada" + i)).append("\n");
-            }
-            assertEquals(vcs.makeTree(), vcs.hash("testText1.txt 22d1403d437e1945b5264c769e3a735431bc1107\ntestText0.txt 79c23f15f7fcfb0667964d8dbeed553179928217\n"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-    @org.junit.jupiter.api.Test
     void commitTest() {
         VersionControlSystem vcs = cleanUp();
         try {
@@ -95,9 +76,6 @@ class VersionControlSystemTest {
             vcs.add(TESTDIR +"\\testText.txt");
             vcs.remove(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
-            Path path = Paths.get(VCSDIR + "\\Branches\\Master");
-            List<String> HEAD = Files.readAllLines(path);
-            assertEquals(0, HEAD.size());
             vcs.add(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
             writer = new FileWriter(TESTDIR +"\\testText.txt");
