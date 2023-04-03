@@ -166,6 +166,28 @@ class VersionControlSystemTest {
             fail();
         }
     }
+    @org.junit.jupiter.api.Test
+    void statusTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            FileWriter writer;
+            for (int i = 0; i < 5; i++) {
+                writer = new FileWriter(TESTDIR +"\\testText" + i +".txt");
+                writer.write("This is some nice text, yada" + i);
+                writer.close();
+                vcs.add(TESTDIR +"\\testText" + i +".txt");
+                vcs.commit(""+i, "User");
+            }
+            new File(TESTDIR + "\\Tester").mkdir();
+            writer = new FileWriter(TESTDIR +"\\Tester\\testText.txt");
+            writer.write("This is some nice text, yada");
+            writer.close();
+            vcs.status();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();
         assert files != null;

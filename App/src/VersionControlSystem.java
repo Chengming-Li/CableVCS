@@ -3,13 +3,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
+import java.util.stream.Stream;
 
 public class VersionControlSystem {
     private final Path currentDirectory;
@@ -21,6 +18,7 @@ public class VersionControlSystem {
     private final Path branches;
     private String branch;
     private Map<String, String> indexMap;
+    private Map<String, String> lastCommitMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
     public VersionControlSystem(String currentDirectory) {
@@ -91,13 +89,13 @@ public class VersionControlSystem {
                         return null;
                     }
                 }
-                File file = new File(path.resolve("Branches").toFile(), "Master");
+                File file = new File(path.resolve("Branches").toFile(), "master");
                 try {
                     if (!file.createNewFile()) {
                         System.out.println("Failed to create " + file.getAbsolutePath());
                     } else {
                         FileWriter writer = new FileWriter(sub.get("HEAD"));
-                        writer.write(path.resolve("Branches").resolve("Master").toString());
+                        writer.write(path.resolve("Branches").resolve("master").toString());
                         writer.close();
                     }
                 } catch (Exception e) {
@@ -265,7 +263,6 @@ public class VersionControlSystem {
             return null;
         }
     }
-
     public String globalLog() {
         try {
             StringBuilder sb = new StringBuilder();
@@ -278,6 +275,38 @@ public class VersionControlSystem {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public void status() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== Branches ===\n");
+        try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
+            for (Path path : walk.toList()) {
+                if (path.getFileName().toString().equals(branch)) {
+                    sb.append("*").append(path.getFileName()).append("\n");
+                } else {
+                    sb.append(path.getFileName()).append("\n");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        readLastCommit();
+        readIndex();
+        try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))){
+            String p;
+            for (Path path : walk.toList()) {
+                p = this.currentDirectory.relativize(path).toString();
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void checkout(String path, boolean branch) {
+        // only if it's a branch:
+        this.lastCommitMap = null;
     }
 
     /**
@@ -329,6 +358,32 @@ public class VersionControlSystem {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    /**
+     * Reads the tree in the last commit and stores it in lastCommitMap
+     *  [path] : [hash]
+     * If there was no last commit, or if lastCommitMap has already been filled, do nothing
+     */
+    private void readLastCommit() {
+        if (this.lastCommitMap != null) {
+            return;
+        }
+        try {
+            File tree = lastTree();
+            if (tree == null) {
+                return ;
+            }
+            this.lastCommitMap = new HashMap<>();
+            BufferedReader br = new BufferedReader(new FileReader(tree));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] l = line.split(" ");
+                this.lastCommitMap.put(l[0], l[1]);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
