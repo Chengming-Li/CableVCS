@@ -8,27 +8,11 @@ import java.util.List;
 class VersionControlSystemTest {
     private static final String TESTDIR = "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\Test";
     private static final String VCSDIR = TESTDIR + "\\.vcs";
+
     @org.junit.jupiter.api.Test
     void init() {
         VersionControlSystem vcs = cleanUp();
         assertTrue(Files.exists(Paths.get(VCSDIR)));
-    }
-    @org.junit.jupiter.api.Test
-    void testCreateFile() {
-        VersionControlSystem vcs = cleanUp();
-        try {
-            FileWriter writer = new FileWriter(TESTDIR +"\\testText.txt");
-            writer.write("This is some nice text, yada yada");
-            writer.close();
-            String hash = vcs.hash(new File(TESTDIR +"\\testText.txt"));
-            assertFalse(vcs.hashExists(hash));
-            assertTrue(vcs.createFile(new File(TESTDIR +"\\testText.txt"), hash));
-            assertTrue(vcs.hashExists(hash));
-            assertEquals(hash, vcs.hash("This is some nice text, yada yada"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
     }
     @org.junit.jupiter.api.Test
     void addTest() {
@@ -82,7 +66,8 @@ class VersionControlSystemTest {
             vcs.commit("Test Commit", "User");
             assertEquals(0, Files.readAllLines(indexPath).size());
             assertEquals(Files.readAllLines(headPath).size(), 1);
-            File firstCommit = vcs.getHashedFile(Files.readAllLines(headPath).get(0));
+            Path of = Path.of(VCSDIR);
+            File firstCommit = VCSUtils.findHash(Files.readAllLines(headPath).get(0), of).toFile();
             String firstCommitHash = Files.readAllLines(headPath).get(0);
             assertTrue(firstCommit.exists());
             List<String> firstCommitContents = Files.readAllLines(firstCommit.toPath());
@@ -91,7 +76,7 @@ class VersionControlSystemTest {
             writer.close();
             vcs.add(TESTDIR +"\\testText0.txt");
             vcs.commit("Second Commit", "User");
-            File secondCommit = vcs.getHashedFile(Files.readAllLines(headPath).get(0));
+            File secondCommit = VCSUtils.findHash(Files.readAllLines(headPath).get(0), of).toFile();
             List<String> secondCommitContents = Files.readAllLines(secondCommit.toPath());
             assertEquals(secondCommitContents.get(1), firstCommitHash);
             assertNotEquals(firstCommitContents.get(0), secondCommitContents.get(0));

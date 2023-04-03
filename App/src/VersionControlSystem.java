@@ -8,28 +8,29 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Stream;
 
-public class VersionControlSystem {
+public class VersionControlSystem extends VCSUtils {
     private final Path currentDirectory;
     private final Path vcsDirectory;
     private final File head;
     private final File index;
+    private Commit lastCommit;
     private final File AllCommits;
     private final Path objects;
     private final Path branches;
     private String branch;
     private Map<String, String> indexMap;
-    private Map<String, String> lastCommitMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
-        this.vcsDirectory = pathBuilder(new String[]{".vcs"}, this.currentDirectory);
-        this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory).toFile();
-        this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
-        this.objects = pathBuilder(new String[]{"Objects"}, vcsDirectory);
-        this.branches = pathBuilder(new String[]{"Branches"}, vcsDirectory);
-        this.AllCommits = pathBuilder(new String[]{"AllCommits"}, vcsDirectory).toFile();
+        this.vcsDirectory = this.currentDirectory.resolve(".vcs");
+        this.head = this.vcsDirectory.resolve("HEAD").toFile();
+        this.index = this.vcsDirectory.resolve("Index").toFile();
+        this.objects = this.vcsDirectory.resolve("Objects");
+        this.branches = this.vcsDirectory.resolve("Branches");
+        this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();;
         this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
@@ -37,9 +38,10 @@ public class VersionControlSystem {
         this.head = new File(head);
         this.index = new File(index);
         this.objects = Paths.get(objects);
-        this.branches = pathBuilder(new String[]{"Branches"}, this.vcsDirectory);
+        this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = new File(AllCommits);
         this.branch = Objects.requireNonNull(getHeadPath()).getName();
+        this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
     }
 
     /**
@@ -48,7 +50,7 @@ public class VersionControlSystem {
      */
     public static VersionControlSystem init(String dir) {
         Path start = Paths.get(dir);
-        File vcs = pathBuilder(new String[] {".vcs"}, start).toFile();
+        File vcs = start.resolve(".vcs").toFile();
         if (!Files.exists(start)) {
             System.out.println("Directory doesn't exist");
         } else if (vcs.exists()) {
@@ -66,7 +68,7 @@ public class VersionControlSystem {
                     File subfolder = new File(path.toFile(), subDirectory);
                     if (!subfolder.mkdir()) {
                         vcs.delete();
-                        System.out.println("Failed to create " + pathBuilder(new String[] {subDirectory}, path));
+                        System.out.println("Failed to create " + path.resolve(subDirectory));
                         return null;
                     } else {
                         sub.put(subDirectory, subfolder.toPath().toAbsolutePath().toString());
@@ -77,14 +79,14 @@ public class VersionControlSystem {
                     try {
                         if (!file.createNewFile()) {
                             vcs.delete();
-                            System.out.println("Failed to create " + pathBuilder(new String[] {f}, path));
+                            System.out.println("Failed to create " + path.resolve(f));
                             return null;
                         } else {
                             sub.put(f, file.toPath().toAbsolutePath().toString());
                         }
                     } catch (Exception e) {
                         vcs.delete();
-                        System.out.println("Failed to create " + pathBuilder(new String[] {f}, path));
+                        System.out.println("Failed to create " + path.resolve(f));
                         System.out.println(e.getMessage());
                         return null;
                     }
@@ -119,7 +121,7 @@ public class VersionControlSystem {
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
             String hash = hash(file);
-            String lastHash = lastCommitHash(name);
+            String lastHash = lastCommit.getTree().map.getOrDefault(name, null);
             if (!file.exists()) {
                 if (lastHash != null) {
                     this.indexMap.put(name, String.format("________________________________________ %d", hash, 2));
@@ -135,17 +137,15 @@ public class VersionControlSystem {
                 } else {
                     this.indexMap.put(name, String.format("%s %d", hash, 0));
                 }
-                createFile(file, hash);
+                createFile(file, hash, vcsDirectory);
             }
             StringBuilder sb = new StringBuilder();
             for (String key : this.indexMap.keySet()) {
                 sb.append(String.format("%s %s\n", key, indexMap.get(key)));
             }
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(index))) {
-                bw.write(sb.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            FileWriter writer = new FileWriter(index);
+            writer.write(sb.toString());
+            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -170,30 +170,16 @@ public class VersionControlSystem {
             return;
         }
         try {
-            File headPath = getHeadPath();
-            if (headPath == null) {
-                System.out.println("Unable to get head pointer");
-                return;
-            }
-            StringBuilder sb = new StringBuilder();
-            sb.append(makeTree()).append("\n");
-            List<String> path = Files.readAllLines(headPath.toPath());
-            if (path.size() != 0) {
-                sb.append(path.get(0));
-            }
-            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss"));
-            sb.append("\n").append(time).append("\n").append(user).append("\n").append(this.branch).append("\n").append(message);
-            String hash = hash(sb.toString());
-            createFile(sb.toString(), hash);
+            this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit);
             FileWriter fw = new FileWriter(getHeadPath(), false);
-            fw.write(hash);
+            fw.write(lastCommit.hash);
             fw.close();
             this.indexMap = null;
             fw = new FileWriter(this.index, false);
             fw.write("");
             fw.close();
             fw = new FileWriter(this.AllCommits, true);
-            fw.write(hash + "\n");
+            fw.write(lastCommit.hash + "\n");
             fw.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -209,7 +195,7 @@ public class VersionControlSystem {
             readIndex();
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
-            if (lastCommitHash(name) == null) {
+            if (lastCommit.getTree().map.getOrDefault(name, null) == null) {
                 if (this.indexMap.containsKey(name)) {
                     this.indexMap.remove(name);
                 } else {
@@ -246,7 +232,6 @@ public class VersionControlSystem {
      */
     public String log() {
         try {
-            File lastCommit = lastCommit();
             File headPath = getHeadPath();
             if (lastCommit == null || headPath == null) {
                 return "";
@@ -290,7 +275,6 @@ public class VersionControlSystem {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        readLastCommit();
         readIndex();
         try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))){
             String p;
@@ -299,7 +283,7 @@ public class VersionControlSystem {
             Set<String> untracked = new HashSet<>();
             Set<String> removed = new HashSet<>();
             Set<String> indexFiles = new HashSet<>(indexMap.keySet());
-            Set<String> commitFiles = new HashSet<>(lastCommitMap.keySet());
+            Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
             String line;
             for (Path path : walk.toList()) {
                 p = this.currentDirectory.relativize(path).toString();
@@ -312,7 +296,7 @@ public class VersionControlSystem {
                     } else {
                         modified.add(p + " (modified)");
                     }
-                } else if (commitFiles.contains(p) && !lastCommitMap.get(p).equals(hash(path.toFile()))) {
+                } else if (commitFiles.contains(p) && !lastCommit.getTree().map.get(p).equals(hash(path.toFile()))) {
                     modified.add(p + " (modified)");
                 } else if (!commitFiles.contains(p)){
                     untracked.add(p);
@@ -363,7 +347,6 @@ public class VersionControlSystem {
 
     public void checkout(String path, boolean branch) {
         // only if it's a branch:
-        this.lastCommitMap = null;
     }
 
     /**
@@ -376,71 +359,6 @@ public class VersionControlSystem {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    /**
-     * Returns the File of the last commit, based on what is stored in the head file
-     * @return null if there is no last commit, the File of the last commit otherwise
-     */
-    private File lastCommit() {
-        try {
-            File headPath = getHeadPath();
-            if (headPath == null) {
-                return null;
-            }
-            List<String> path = Files.readAllLines(headPath.toPath());
-            if (path.size() == 0) {
-                return null;
-            }
-            return objects.resolve(path.get(0).substring(0, 2)).resolve(path.get(0).substring(2)).toFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Returns the File of the tree in the last commit
-     * @return null if there was no previous commit, the File object otherwise
-     */
-    private File lastTree() {
-        try {
-            File commit = lastCommit();
-            if (commit == null) {
-                return null;
-            }
-            String path = Files.readAllLines(Paths.get(commit.getAbsolutePath())).get(0);
-            return objects.resolve(path.substring(0, 2)).resolve(path.substring(2)).toFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Reads the tree in the last commit and stores it in lastCommitMap
-     *  [path] : [hash]
-     * If there was no last commit, or if lastCommitMap has already been filled, do nothing
-     */
-    private void readLastCommit() {
-        if (this.lastCommitMap != null) {
-            return;
-        }
-        try {
-            File tree = lastTree();
-            if (tree == null) {
-                return ;
-            }
-            this.lastCommitMap = new HashMap<>();
-            BufferedReader br = new BufferedReader(new FileReader(tree));
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] l = line.split(" ");
-                this.lastCommitMap.put(l[0], l[1]);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -466,29 +384,6 @@ public class VersionControlSystem {
     }
 
     /**
-     * Returns the hash of the file at the last commit
-     * @param path: path to the file
-     * @return string of the hash of the file in the last commit, or null if the file isn't in the last commit
-     */
-    private String lastCommitHash(String path) {
-        try {
-            File lt = lastTree();
-            if (lt != null) {
-                BufferedReader br = new BufferedReader(new FileReader(lt));
-                String line;
-                while ((line = br.readLine()) != null) {
-                    if (line.startsWith(path)) {
-                        return line.substring(path.length()+1);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
      * Creates a tree file, which is the contents of the last tree but with changes based on the files staged
      * @return hash of the new tree file
      */
@@ -496,156 +391,30 @@ public class VersionControlSystem {
         try {
             readIndex();
             StringBuilder sb = new StringBuilder();
-            File tree = lastTree();
-            if (tree == null) {
+            if (lastCommit == null) {
                 for (String path : this.indexMap.keySet()) {
                     sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
                 }
             } else {
-                BufferedReader br = new BufferedReader(new FileReader(tree));
-                Set<String> indexKeys = indexMap.keySet();
-                String line;
-                String path;
-                while ((line = br.readLine()) != null) {
-                    path = line.split(" ")[0];
-                    if (indexKeys.contains(path)) {
-                        if (!this.indexMap.get(path).endsWith("2")) {
-                            sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
-                        }
-                        indexKeys.remove(path);
+                Map<String, String> map = new HashMap<>(lastCommit.getTree().map);
+                for (String key : indexMap.keySet()) {
+                    if (indexMap.get(key).endsWith("2")) {
+                        map.remove(key);
                     } else {
-                        sb.append(line).append("\n");
+                        map.put(key, indexMap.get(key).substring(0, indexMap.get(key).length()-2));
                     }
                 }
-                for (String key : indexKeys) {
-                    sb.append(String.format("%s %s\n", key, this.indexMap.get(key).substring(0, this.indexMap.get(key).length()-2)));
+                for (String key : map.keySet()) {
+                    sb.append(String.format("%s %s\n", key, map.get(key)));
                 }
             }
             String hash = hash(sb.toString());
-            createFile(sb.toString(), hash);
+            createFile(sb.toString(), hash, vcsDirectory);
             return hash;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-    }
-
-    /**
-     * Returns a path to a file or directory given how to get there from currentDirectory
-     * @param paths: how to get to the desired destination, in the form of an array of strings
-     * @return the desired path
-     */
-    private static Path pathBuilder(String[] paths, Path start) {
-        Path output = start;
-        for (String path : paths) {
-            output = output.resolve(path);
-        }
-        return output;
-    }
-
-    /**
-     * Returns the SHA-1 hash for a file
-     * @param path: path to the file
-     * @return returns the string hash for the file
-     */
-    public String hash(File path) {
-        try (FileInputStream fis = new FileInputStream(path)) {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] dataBytes = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = fis.read(dataBytes)) != -1) {
-                md.update(dataBytes, 0, bytesRead);
-            }
-            byte[] hashBytes = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte hashByte : hashBytes) {
-                sb.append(Integer.toString((hashByte & 0xff) + 0x100, 16).substring(1));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            System.out.println("Hash failed for " + path + "due to:\n" + e.getMessage());
-            return null;
-        }
-    }
-    public String hash(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(input.getBytes());
-            byte[] hashBytes = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            System.out.println("Hash failed due to:\n" + e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Checks if a file with the hash as the name is already saved
-     * @param hash: the hash
-     * @return boolean if the file is already saved.
-     */
-    public boolean hashExists(String hash) {
-        return Files.exists(getHashedFile(hash).toPath());
-    }
-
-    /**
-     * Creates the bin of the first two characters of the hash if that doesn't exist, and copies the file to the bin
-     * @param path: path to the file to be copied
-     * @param hash: the hashcode of the file, for naming and bin assignment purposes
-     * @return boolean whether the creation was successful or not
-     */
-    public boolean createFile(File path, String hash) {
-        if (hashExists(hash)) {
-            return true;
-        } else {
-            Path source = path.toPath();
-            Path target = getHashedFile(hash).toPath();
-            File bin = target.getParent().toFile();
-            if (!bin.exists() && !bin.mkdir()) {
-                return false;
-            }
-            try {
-                Files.copy(source, target);
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-    }
-    public boolean createFile(String contents, String hash) {
-        if (hashExists(hash)) {
-            return true;
-        } else {
-            File target = getHashedFile(hash);
-            File bin = target.getParentFile();
-            if (!bin.exists() && !bin.mkdir()) {
-                return false;
-            }
-            try {
-                FileWriter writer = new FileWriter(target);
-                writer.write(contents);
-                writer.close();
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-    }
-
-    /**
-     * Returns the file for the hash
-     * @param hash: hash of the file
-     * @return file object
-     */
-    public File getHashedFile(String hash) {
-        return pathBuilder(new String[] {subDirectories[0], hash.substring(0, 2), hash.substring(2)}, vcsDirectory).toFile();
     }
 
     /**
@@ -656,7 +425,7 @@ public class VersionControlSystem {
      */
     private String printCommit(String hash, StringBuilder sb, boolean global) {
         try {
-            List<String> path = Files.readAllLines(getHashedFile(hash).toPath());
+            List<String> path = Files.readAllLines(findHash(hash, vcsDirectory));
             sb.append(String.format("===\ncommit %s\nDate: %s\nAuthor: %s\n", hash, path.get(2), path.get(3)));
             if (global){
                 sb.append("Branch: ").append(path.get(4)).append("\n");
