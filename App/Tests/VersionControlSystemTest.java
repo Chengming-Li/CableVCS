@@ -182,7 +182,26 @@ class VersionControlSystemTest {
             writer = new FileWriter(TESTDIR +"\\Tester\\testText.txt");
             writer.write("This is some nice text, yada");
             writer.close();
+            vcs.add(TESTDIR +"\\Tester\\testText.txt");
+            vcs.remove(TESTDIR +"\\testText0.txt");
+            new File(TESTDIR +"\\testText1.txt").delete();
+            writer = new FileWriter(TESTDIR +"\\testText2.txt", false);
+            writer.write("This is some nice text");
+            writer.close();
+            writer = new FileWriter(TESTDIR +"\\testText3.txt", false);
+            writer.write("This is some nice text");
+            writer.close();
+            vcs.add(TESTDIR +"\\testText3.txt");
+            writer = new FileWriter(TESTDIR +"\\testText.txt");
+            writer.write("This is some nice text, yada dabba doo");
+            writer.close();
+            writer = new FileWriter(TESTDIR +"\\testText4.txt", false);
+            writer.write("This is some nice text, yada dabba");
+            vcs.add(TESTDIR +"\\testText4.txt");
+            writer.write("This is some nice text, yada dabba");
+            writer.close();
             System.out.println(vcs.status());
+            assertEquals(vcs.status(), "=== Branches ===\n*master\n\n=== Staged Files ===\ntestText3.txt\nTester\\testText.txt\n\n=== Removed Files ===\ntestText0.txt\n\n=== Modified Files ===\ntestText2.txt (modified)\ntestText4.txt (modified)\ntestText1.txt (deleted)\n\n=== Untracked Files ===\ntestText.txt\n");
         } catch (Exception e) {
             e.printStackTrace();
             fail();

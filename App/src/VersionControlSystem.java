@@ -217,7 +217,6 @@ public class VersionControlSystem {
                 }
             } else {
                 this.indexMap.put(name, String.format("________________________________________ %d", 2));
-                this.indexMap.remove(name);
                 if (file.exists()) {
                     file.delete();
                 }
@@ -296,11 +295,11 @@ public class VersionControlSystem {
         try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))){
             String p;
             Set<String> staged = new HashSet<>();
-            Set<String> removed = new HashSet<>();
             Set<String> modified = new HashSet<>();
             Set<String> untracked = new HashSet<>();
-            Set<String> indexFiles = indexMap.keySet();
-            Set<String> commitFiles = lastCommitMap.keySet();
+            Set<String> removed = new HashSet<>();
+            Set<String> indexFiles = new HashSet<>(indexMap.keySet());
+            Set<String> commitFiles = new HashSet<>(lastCommitMap.keySet());
             String line;
             for (Path path : walk.toList()) {
                 p = this.currentDirectory.relativize(path).toString();
@@ -315,18 +314,23 @@ public class VersionControlSystem {
                     }
                 } else if (commitFiles.contains(p) && !lastCommitMap.get(p).equals(hash(path.toFile()))) {
                     modified.add(p + " (modified)");
-                } else {
+                } else if (!commitFiles.contains(p)){
                     untracked.add(p);
                 }
+                indexFiles.remove(p);
+                commitFiles.remove(p);
             }
             for (String i : indexFiles) {
                 if (indexMap.get(i).endsWith("2")) {
-                    staged.add(i);
+                    removed.add(i);
                 } else {
                     modified.add(i + " (deleted)");
                 }
+                commitFiles.remove(i);
             }
-            removed.addAll(commitFiles);
+            for (String i : commitFiles) {
+                modified.add(i + " (deleted)");
+            }
             if (!staged.isEmpty()) {
                 sb.append("\n=== Staged Files ===\n");
                 for (String f : staged) {
@@ -499,17 +503,22 @@ public class VersionControlSystem {
                 }
             } else {
                 BufferedReader br = new BufferedReader(new FileReader(tree));
+                Set<String> indexKeys = indexMap.keySet();
                 String line;
                 String path;
                 while ((line = br.readLine()) != null) {
                     path = line.split(" ")[0];
-                    if (this.indexMap.containsKey(path)) {
-                        if (!this.indexMap.get(path).substring(this.indexMap.get(path).length() - 1).equals("2")) {
+                    if (indexKeys.contains(path)) {
+                        if (!this.indexMap.get(path).endsWith("2")) {
                             sb.append(String.format("%s %s\n", path, this.indexMap.get(path).substring(0, this.indexMap.get(path).length()-2)));
                         }
+                        indexKeys.remove(path);
                     } else {
                         sb.append(line).append("\n");
                     }
+                }
+                for (String key : indexKeys) {
+                    sb.append(String.format("%s %s\n", key, this.indexMap.get(key).substring(0, this.indexMap.get(key).length()-2)));
                 }
             }
             String hash = hash(sb.toString());
