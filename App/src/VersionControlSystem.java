@@ -122,7 +122,7 @@ public class VersionControlSystem {
             String lastHash = lastCommitHash(name);
             if (!file.exists()) {
                 if (lastHash != null) {
-                    this.indexMap.put(name, String.format("%s %d", hash, 2));
+                    this.indexMap.put(name, String.format("________________________________________ %d", hash, 2));
                 } else {
                     System.out.println(name + " does not exist");
                     return;
@@ -209,15 +209,15 @@ public class VersionControlSystem {
             readIndex();
             File file = new File(path);
             String name = this.currentDirectory.relativize(file.toPath()).toString();
-            String lastHash = lastCommitHash(name);
-            if (lastHash == null) {
+            if (lastCommitHash(name) == null) {
                 if (this.indexMap.containsKey(name)) {
                     this.indexMap.remove(name);
                 } else {
                     System.out.println("No reason to remove the file");
                 }
             } else {
-                this.indexMap.put(name, String.format("%s %d", lastHash, 2));
+                this.indexMap.put(name, String.format("________________________________________ %d", 2));
+                this.indexMap.remove(name);
                 if (file.exists()) {
                     file.delete();
                 }
@@ -277,7 +277,7 @@ public class VersionControlSystem {
         }
     }
 
-    public void status() {
+    public String status() {
         StringBuilder sb = new StringBuilder();
         sb.append("=== Branches ===\n");
         try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
@@ -295,13 +295,66 @@ public class VersionControlSystem {
         readIndex();
         try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))){
             String p;
+            Set<String> staged = new HashSet<>();
+            Set<String> removed = new HashSet<>();
+            Set<String> modified = new HashSet<>();
+            Set<String> untracked = new HashSet<>();
+            Set<String> indexFiles = indexMap.keySet();
+            Set<String> commitFiles = lastCommitMap.keySet();
+            String line;
             for (Path path : walk.toList()) {
                 p = this.currentDirectory.relativize(path).toString();
-
+                if (indexFiles.contains(p)) {
+                    line = indexMap.get(p);
+                    if (line.endsWith("2")) {
+                        untracked.add(p);
+                    } else if (line.startsWith(hash(path.toFile()))){
+                        staged.add(p);
+                    } else {
+                        modified.add(p + " (modified)");
+                    }
+                } else if (commitFiles.contains(p) && !lastCommitMap.get(p).equals(hash(path.toFile()))) {
+                    modified.add(p + " (modified)");
+                } else {
+                    untracked.add(p);
+                }
+            }
+            for (String i : indexFiles) {
+                if (indexMap.get(i).endsWith("2")) {
+                    staged.add(i);
+                } else {
+                    modified.add(i + " (deleted)");
+                }
+            }
+            removed.addAll(commitFiles);
+            if (!staged.isEmpty()) {
+                sb.append("\n=== Staged Files ===\n");
+                for (String f : staged) {
+                    sb.append(f).append("\n");
+                }
+            }
+            if (!removed.isEmpty()) {
+                sb.append("\n=== Removed Files ===\n");
+                for (String f : removed) {
+                    sb.append(f).append("\n");
+                }
+            }
+            if (!modified.isEmpty()) {
+                sb.append("\n=== Modified Files ===\n");
+                for (String f : modified) {
+                    sb.append(f).append("\n");
+                }
+            }
+            if (!untracked.isEmpty()) {
+                sb.append("\n=== Untracked Files ===\n");
+                for (String f : untracked) {
+                    sb.append(f).append("\n");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return sb.toString();
     }
 
     public void checkout(String path, boolean branch) {

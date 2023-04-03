@@ -182,7 +182,7 @@ class VersionControlSystemTest {
             writer = new FileWriter(TESTDIR +"\\Tester\\testText.txt");
             writer.write("This is some nice text, yada");
             writer.close();
-            vcs.status();
+            System.out.println(vcs.status());
         } catch (Exception e) {
             e.printStackTrace();
             fail();
