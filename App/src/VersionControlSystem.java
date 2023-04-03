@@ -19,14 +19,12 @@ public class VersionControlSystem {
     private final File AllCommits;
     private final Path objects;
     private final Path branches;
-    private final String separator;
     private String branch;
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
-        this.separator = System.getProperty("file.separator");
         this.vcsDirectory = pathBuilder(new String[]{".vcs"}, this.currentDirectory);
         this.head = pathBuilder(new String[]{"HEAD"}, vcsDirectory).toFile();
         this.index = pathBuilder(new String[]{"Index"}, vcsDirectory).toFile();
@@ -41,7 +39,6 @@ public class VersionControlSystem {
         this.head = new File(head);
         this.index = new File(index);
         this.objects = Paths.get(objects);
-        this.separator = System.getProperty("file.separator");
         this.branches = pathBuilder(new String[]{"Branches"}, this.vcsDirectory);
         this.AllCommits = new File(AllCommits);
         this.branch = Objects.requireNonNull(getHeadPath()).getName();
@@ -465,7 +462,7 @@ public class VersionControlSystem {
             }
             return sb.toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Hash failed due to:\n" + e.getMessage());
             return null;
         }
     }
@@ -496,7 +493,7 @@ public class VersionControlSystem {
                 return false;
             }
             try {
-                Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);
+                Files.copy(source, target);
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -555,4 +552,3 @@ public class VersionControlSystem {
         }
     }
 }
-
