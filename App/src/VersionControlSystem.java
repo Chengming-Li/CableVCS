@@ -264,7 +264,7 @@ public class VersionControlSystem extends VCSUtils {
                 if (commitCache.containsKey(line)) {
                     sb.append(commitCache.get(line).toString(true));
                 } else {
-                    sb.append(Objects.requireNonNull(Commit.findCommit(line, vcsDirectory)).toString(true));
+                    sb.append(Objects.requireNonNull(Commit.findCommit(line, vcsDirectory, commitCache)).toString(true));
                 }
             }
             return sb.toString();

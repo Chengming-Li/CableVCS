@@ -12,6 +12,13 @@ public class Tree extends VCSUtils{
         this.hash = hash;
         this.map = map;
     }
+
+    /**
+     * returns the Tree object under the hash
+     * @param hash: hash of the desired tree
+     * @param vcsDirectory: path to the .vcs directory
+     * @return tree object
+     */
     public static Tree findTree(String hash, Path vcsDirectory) {
         try (BufferedReader br = new BufferedReader(new FileReader(findHash(hash, vcsDirectory).toFile()))){
             Map<String, String> map = new HashMap<>();
@@ -27,6 +34,14 @@ public class Tree extends VCSUtils{
             return null;
         }
     }
+
+    /**
+     * Creates and returns a new tree object
+     * @param vcsDirectory: path to the .vcs directory
+     * @param index: the map representing the contents of the index file
+     * @param commit: the current commit
+     * @return a tree object
+     */
     public static Tree makeTree(Path vcsDirectory, Map<String, String> index, Commit commit) {
         try {
             StringBuilder sb = new StringBuilder();

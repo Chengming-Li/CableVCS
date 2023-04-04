@@ -36,26 +36,35 @@ public class Commit extends VCSUtils {
         this.vcsDirectory = vcsDirectory;
         this.treeObject = treeObject;
     }
-    public Commit parentCommit() {
-        if ("".equals(lastHash)) {
-            return null;
-        }
-        return findCommit(hash, this.vcsDirectory);
-    }
+
+    /**
+     * Returns a commit object representing the parent commit of this commit
+     * @param cache: a hash : Commit map, passed in so already created Commit objects don't need to be re-instantiated
+     * @return the parent commit object
+     */
     public Commit parentCommit(Map<String, Commit> cache) {
         if ("".equals(lastHash)) {
             return null;
-        } else if (cache.containsKey(lastHash)) {
-            return cache.get(lastHash);
         }
-        return findCommit(hash, this.vcsDirectory);
+        return findCommit(lastHash, this.vcsDirectory, cache);
     }
+
+    /**
+     * Returns a tree object of the tree in this commit
+     * @return tree object
+     */
     public Tree getTree() {
         if (this.treeObject == null) {
             this.treeObject = Tree.findTree(this.tree, this.vcsDirectory);
         }
         return treeObject;
     }
+
+    /**
+     * returns a string representation of the Commit object
+     * @param global: boolean, if the branch should be included or not
+     * @return formatted string of the Commit
+     */
     public String toString(boolean global) {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("===\ncommit %s\nDate: %s\nAuthor: %s\n", hash, time, author));
@@ -65,6 +74,13 @@ public class Commit extends VCSUtils {
         sb.append(this.message).append("\n");
         return sb.toString();
     }
+
+    /**
+     * Returns a commit object of the commit in the hash
+     * @param hash: hash of the desired commit
+     * @param vcsDirectory: Path to the .vcs directory
+     * @return commit object
+     */
     public static Commit findCommit(String hash, Path vcsDirectory) {
         try {
             List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
@@ -74,6 +90,18 @@ public class Commit extends VCSUtils {
             return null;
         }
     }
+    public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) {
+        if (cache.containsKey(hash)) {
+            return cache.get(hash);
+        }
+        return findCommit(hash, vcsDirectory);
+    }
+
+    /**
+     * returns commit object representing the head commit
+     * @param vcsDirectory: the Path to the .vcs directory
+     * @return commit object
+     */
     public static Commit getHeadCommit(Path vcsDirectory) {
         try {
             String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
@@ -89,6 +117,16 @@ public class Commit extends VCSUtils {
         }
     }
 
+    /**
+     * Creates a new commit
+     * @param user: author of the commit
+     * @param message: commit message
+     * @param vcsDirectory: path to the .vcs directory
+     * @param current: current commit object
+     * @param index: a map representing the contents of the index
+     * @param branch: the current branch
+     * @return returns the newly created commit object
+     */
     public static Commit writeCommit(String user, String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch) {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
