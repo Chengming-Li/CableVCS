@@ -164,7 +164,7 @@ class VersionControlSystemTest {
             writer.write("This is some nice text, yada dabba");
             writer.close();
             System.out.println(vcs.status());
-            assertEquals(vcs.status(), "=== Branches ===\n*master\n\n=== Staged Files ===\ntestText3.txt\nTester\\testText.txt\n\n=== Removed Files ===\ntestText0.txt\n\n=== Modified Files ===\ntestText2.txt (modified)\ntestText4.txt (modified)\ntestText1.txt (deleted)\n\n=== Untracked Files ===\ntestText.txt\n");
+            assertEquals(vcs.status(), "=== Branches ===\n*master\n=== Staged Files ===\ntestText3.txt\nTester\\testText.txt\n=== Removed Files ===\ntestText0.txt\n=== Modified Files ===\ntestText2.txt (modified)\ntestText4.txt (modified)\ntestText1.txt (deleted)\n=== Untracked Files ===\ntestText.txt\n");
         } catch (Exception e) {
             e.printStackTrace();
             fail();

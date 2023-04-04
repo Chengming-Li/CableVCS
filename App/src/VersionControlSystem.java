@@ -255,6 +255,17 @@ public class VersionControlSystem extends VCSUtils {
         }
         return sb.toString();
     }
+
+    /**
+     * returns the all commits
+     * ===
+     * commit [hash]
+     * Date: [MM/DD/YYYY] [hh/dd/ss]
+     * Author: [author]
+     * Branch: [branch]
+     * [message]
+     * @return a string of all the commits
+     */
     public String globalLog() {
         try {
             StringBuilder sb = new StringBuilder();
@@ -274,6 +285,20 @@ public class VersionControlSystem extends VCSUtils {
         }
     }
 
+    /**
+     * Checks all files in the directory, and returns it formatted by status of file
+     * === Branches ===
+     * [branches]
+     * === Staged Files ===
+     * [files that have been modified and staged]
+     * === Removed Files ===
+     * [files that have been removed and staged]
+     * === Modified Files ===
+     * [modified files that are unstaged, followed by (modified) or (deleted)]
+     * === Untracked Files ===
+     * [untracked files]
+     * @return
+     */
     public String status() {
         StringBuilder sb = new StringBuilder();
         sb.append("=== Branches ===\n");
@@ -329,25 +354,25 @@ public class VersionControlSystem extends VCSUtils {
                 modified.add(i + " (deleted)");
             }
             if (!staged.isEmpty()) {
-                sb.append("\n=== Staged Files ===\n");
+                sb.append("=== Staged Files ===\n");
                 for (String f : staged) {
                     sb.append(f).append("\n");
                 }
             }
             if (!removed.isEmpty()) {
-                sb.append("\n=== Removed Files ===\n");
+                sb.append("=== Removed Files ===\n");
                 for (String f : removed) {
                     sb.append(f).append("\n");
                 }
             }
             if (!modified.isEmpty()) {
-                sb.append("\n=== Modified Files ===\n");
+                sb.append("=== Modified Files ===\n");
                 for (String f : modified) {
                     sb.append(f).append("\n");
                 }
             }
             if (!untracked.isEmpty()) {
-                sb.append("\n=== Untracked Files ===\n");
+                sb.append("=== Untracked Files ===\n");
                 for (String f : untracked) {
                     sb.append(f).append("\n");
                 }
