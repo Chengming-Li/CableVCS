@@ -48,6 +48,12 @@ public class Commit extends VCSUtils {
         }
         return findCommit(lastHash, this.vcsDirectory, cache);
     }
+    public Commit parentCommit() {
+        if ("".equals(lastHash)) {
+            return null;
+        }
+        return findCommit(lastHash, this.vcsDirectory);
+    }
 
     /**
      * Returns a tree object of the tree in this commit
@@ -106,6 +112,23 @@ public class Commit extends VCSUtils {
         try {
             String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
             List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
+            if (lastCommit.size() == 0) {
+                return null;
+            } else {
+                return findCommit(lastCommit.get(0), vcsDirectory);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static Commit getHeadCommit(Path vcsDirectory, String branch) {
+        try {
+            Path p = vcsDirectory.resolve("Branches").resolve(branch);
+            if (!Files.exists(p)) {
+                return null;
+            }
+            List<String> lastCommit = Files.readAllLines(p);
             if (lastCommit.size() == 0) {
                 return null;
             } else {

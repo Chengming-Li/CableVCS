@@ -170,6 +170,80 @@ class VersionControlSystemTest {
             fail();
         }
     }
+    @org.junit.jupiter.api.Test
+    void checkoutTest1() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR +"\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Commit One", "User");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text");
+            writer.close();
+            vcs.checkout(path.toString(), false);
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+            vcs.remove(path.toString());
+            vcs.checkout(path.toString(), false);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
+    void checkoutTest2() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR +"\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Commit One", "User");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text");
+            writer.close();
+            vcs.checkout(path.toString(), false);
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+            vcs.remove(path.toString());
+            vcs.checkout(path.toString(), false);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
+    void checkoutTest3() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR +"\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Commit One", "User");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Commit Two", "User");
+            String hash = vcs.getLastCommit().parentCommit().hash;
+            vcs.checkout(hash, path.toString());
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();
         assert files != null;

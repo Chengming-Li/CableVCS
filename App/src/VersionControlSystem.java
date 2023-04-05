@@ -2,6 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -18,7 +19,7 @@ public class VersionControlSystem extends VCSUtils {
     private Map<String, String> indexMap;
     private static final String[] subDirectories = {"Objects", "Branches"};
     private static final String[] files = {"HEAD", "Index", "AllCommits"};
-    private Map<String, Commit> commitCache;
+    private final Map<String, Commit> commitCache;
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
@@ -301,20 +302,16 @@ public class VersionControlSystem extends VCSUtils {
      */
     public String status() {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== Branches ===\n");
-        try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
-            for (Path path : walk.toList()) {
+        try {
+            sb.append("=== Branches ===\n");
+            for (Path path : Objects.requireNonNull(getBranches())) {
                 if (path.getFileName().toString().equals(branch)) {
                     sb.append("*").append(path.getFileName()).append("\n");
                 } else {
                     sb.append(path.getFileName()).append("\n");
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        readIndex();
-        try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))){
+            readIndex();
             String p;
             Set<String> staged = new HashSet<>();
             Set<String> modified = new HashSet<>();
@@ -323,7 +320,7 @@ public class VersionControlSystem extends VCSUtils {
             Set<String> indexFiles = new HashSet<>(indexMap.keySet());
             Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
             String line;
-            for (Path path : walk.toList()) {
+            for (Path path : getWorkingDir()) {
                 p = this.currentDirectory.relativize(path).toString();
                 if (indexFiles.contains(p)) {
                     line = indexMap.get(p);
@@ -383,8 +380,88 @@ public class VersionControlSystem extends VCSUtils {
         return sb.toString();
     }
 
-    public void checkout(String path, boolean branch) {
-        // only if it's a branch:
+    public void checkout(String input, boolean branch) {
+        try {
+            if (!branch) {
+                Path p = Path.of(input);
+                Path shortP = this.currentDirectory.relativize(p);
+                String hash = this.lastCommit.getTree().map.getOrDefault(shortP.toString(), null);
+                if (hash == null) {
+                    System.out.println("File does not exist in that commit.");
+                    return;
+                }
+                if (shortP.getParent() != null && shortP.getParent().toFile().exists()) {
+                    shortP.getParent().toFile().mkdirs();
+                }
+                Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Map<String, String> headMap = null;
+                Commit c = Commit.getHeadCommit(vcsDirectory, input);
+                Map<String, String> m = this.lastCommit.getTree().map;
+                if (input.equals(this.branch)) {
+                    System.out.println("No need to checkout the current branch.");
+                    return;
+                } else if (c == null) {
+                    System.out.println("No such branch exists.");
+                    return;
+                } else {
+                    headMap = c.getTree().map;
+                    String name;
+                    Set<String> names = new HashSet<>();
+                    for (Path path : Objects.requireNonNull(getWorkingDir())) {
+                        name = this.currentDirectory.relativize(path).toString();
+                        if (headMap.containsKey(name) && !m.containsKey(name)) {
+                            names.add(name);
+                        }
+                    }
+                    if (names.size() > 0) {
+                        System.out.println("There are untracked files in the way; delete it or add it first.");
+                        for (String n : names) {
+                            System.out.println(n);
+                        }
+                        return;
+                    }
+                }
+                for (String name : m.keySet()) {
+                    if (!headMap.containsKey(name)) {
+                        this.currentDirectory.resolve(name).toFile().delete();
+                    }
+                }
+                Path shortP;
+                for (String name : headMap.keySet()) {
+                    shortP = Path.of(name);
+                    if (shortP.getParent() != null && shortP.getParent().toFile().exists()) {
+                        shortP.getParent().toFile().mkdirs();
+                    }
+                    Files.copy(findHash(headMap.get(name), vcsDirectory), this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+                }
+                this.branch = input;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    public void checkout(String commitId, String path) {
+        try {
+            Path p = Path.of(path);
+            Path shortP = this.currentDirectory.relativize(p);
+            Commit c = Commit.findCommit(commitId, vcsDirectory, commitCache);
+            if (c == null) {
+                System.out.println("No commit with that id exists.");
+                return;
+            }
+            String hash = c.getTree().map.getOrDefault(shortP.toString(), null);
+            if (hash == null) {
+                System.out.println("File does not exist in that commit.");
+                return;
+            }
+            if (shortP.getParent() != null && shortP.getParent().toFile().exists()) {
+                shortP.getParent().toFile().mkdirs();
+            }
+            Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -419,5 +496,26 @@ public class VersionControlSystem extends VCSUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Set<Path> getBranches() {
+        try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
+            return new HashSet<>(walk.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private Set<Path> getWorkingDir() {
+        try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))) {
+            return new HashSet<>(walk.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public Commit getLastCommit() {
+        return lastCommit;
     }
 }
