@@ -67,7 +67,7 @@ class VersionControlSystemTest {
         }
     }
     @org.junit.jupiter.api.Test
-    void removeTest() {
+    void removeTest() {  // should print "No changes added to the commit\nNo reason to remove the file"
         VersionControlSystem vcs = cleanUp();
         try {
             FileWriter writer = new FileWriter(TESTDIR +"\\testText.txt");
@@ -239,6 +239,21 @@ class VersionControlSystemTest {
             vcs.checkout(hash, path.toString());
             String pathContents = Files.readAllLines(path).get(0);
             assertEquals(pathContents, "This is some nice text, yada yada");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
+    void checkoutTest4() {  // this should print "File does not exist in that commit"
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.checkout(path.toString(), false);
         } catch (Exception e) {
             e.printStackTrace();
             fail();

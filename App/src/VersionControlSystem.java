@@ -29,14 +29,11 @@ public class VersionControlSystem extends VCSUtils {
         this.objects = this.vcsDirectory.resolve("Objects");
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();
-        commitCache = new HashMap<>();
+        this.commitCache = new HashMap<>();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
-        if (lastCommit != null) {
-            commitCache.put(lastCommit.hash, lastCommit);
-            this.branch = lastCommit.branch;
-        } else {
-            this.branch = Objects.requireNonNull(getHeadPath()).getName();
-        }
+        assert lastCommit != null;
+        this.commitCache.put(lastCommit.hash, lastCommit);
+        this.branch = lastCommit.branch;
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index,
                                 String objects, String AllCommits) {
@@ -47,14 +44,11 @@ public class VersionControlSystem extends VCSUtils {
         this.objects = Paths.get(objects);
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = new File(AllCommits);
-        commitCache = new HashMap<>();
+        this.commitCache = new HashMap<>();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
-        if (lastCommit != null) {
-            commitCache.put(lastCommit.hash, lastCommit);
-            this.branch = lastCommit.branch;
-        } else {
-            this.branch = Objects.requireNonNull(getHeadPath()).getName();
-        }
+        assert lastCommit != null;
+        this.commitCache.put(lastCommit.hash, lastCommit);
+        this.branch = lastCommit.branch;
     }
 
     /**
@@ -64,32 +58,28 @@ public class VersionControlSystem extends VCSUtils {
     public static VersionControlSystem init(String dir) {
         Path start = Paths.get(dir);
         File vcs = start.resolve(".vcs").toFile();
-        if (!Files.exists(start)) {
-            System.out.println("Directory doesn't exist");
-        } else if (vcs.exists()) {
-            System.out.println("Version Control System already exists");
-        } else {
-            if (vcs.mkdir()) {
-                Map<String, String> sub = new HashMap<>();
-                Path path = vcs.toPath();
-                try {
+        try {
+            if (!Files.exists(start)) {
+                System.out.println("Directory doesn't exist");
+            } else if (vcs.exists()) {
+                System.out.println("Version Control System already exists");
+            } else {
+                if (vcs.mkdir()) {
+                    Map<String, String> sub = new HashMap<>();
+                    Path path = vcs.toPath();
                     Files.setAttribute(path, "dos:hidden", true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                for (String subDirectory : SUBDIRECTORIES) {
-                    File subfolder = new File(path.toFile(), subDirectory);
-                    if (!subfolder.mkdir()) {
-                        vcs.delete();
-                        System.out.println("Failed to create " + path.resolve(subDirectory));
-                        return null;
-                    } else {
-                        sub.put(subDirectory, subfolder.toPath().toAbsolutePath().toString());
+                    for (String subDirectory : SUBDIRECTORIES) {
+                        File subfolder = new File(path.toFile(), subDirectory);
+                        if (!subfolder.mkdir()) {
+                            vcs.delete();
+                            System.out.println("Failed to create " + path.resolve(subDirectory));
+                            return null;
+                        } else {
+                            sub.put(subDirectory, subfolder.toPath().toAbsolutePath().toString());
+                        }
                     }
-                }
-                for (String f : FILES) {
-                    File file = new File(path.toFile(), f);
-                    try {
+                    for (String f : FILES) {
+                        File file = new File(path.toFile(), f);
                         if (!file.createNewFile()) {
                             vcs.delete();
                             System.out.println("Failed to create " + path.resolve(f));
@@ -97,30 +87,22 @@ public class VersionControlSystem extends VCSUtils {
                         } else {
                             sub.put(f, file.toPath().toAbsolutePath().toString());
                         }
-                    } catch (Exception e) {
-                        vcs.delete();
-                        System.out.println("Failed to create " + path.resolve(f));
-                        System.out.println(e.getMessage());
-                        return null;
                     }
+                    Commit c = Commit.writeInitialCommit(path);
+                    FileWriter writer = new FileWriter(path.resolve("Branches").resolve("master").toFile());
+                    writer.write(c.hash);
+                    writer.close();
+                    writer = new FileWriter(sub.get("HEAD"));
+                    writer.write(path.resolve("Branches").resolve("master").toString());
+                    writer.close();
+                    return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"),
+                            sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
+                } else {
+                    System.out.println("Unable to create " + vcs.toPath());
                 }
-                File file = new File(path.resolve("Branches").toFile(), "master");
-                try {
-                    if (!file.createNewFile()) {
-                        System.out.println("Failed to create " + file.getAbsolutePath());
-                    } else {
-                        FileWriter writer = new FileWriter(sub.get("HEAD"));
-                        writer.write(path.resolve("Branches").resolve("master").toString());
-                        writer.close();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"),
-                        sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
-            } else {
-                System.out.println("Unable to create " + vcs.toPath());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -169,11 +151,12 @@ public class VersionControlSystem extends VCSUtils {
     }
 
     /**
-     * Creates a commit, which includes 5 lines:
+     * Creates a commit, which includes 6 lines:
      *  [tree]
      *  [previous commit]
      *  [time]
      *  [author]
+     *  [branch]
      *  [message]
      * @param message: string, message for the commit
      * @param user: string, the author of the commit
@@ -403,6 +386,10 @@ public class VersionControlSystem extends VCSUtils {
             if (!branch) {
                 Path p = Path.of(input);
                 Path shortP = this.currentDirectory.relativize(p);
+                if (this.lastCommit == null) {
+                    System.out.println("There was no last commit");
+                    return;
+                }
                 String hash = this.lastCommit.getTree().map.getOrDefault(shortP.toString(), null);
                 if (hash == null) {
                     System.out.println("File does not exist in that commit.");

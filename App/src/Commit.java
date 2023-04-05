@@ -92,6 +92,9 @@ public class Commit extends VCSUtils {
     public static Commit findCommit(String hash, Path vcsDirectory) {
         try {
             List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
+            if (commit.size() == 0) {
+                return new InitialCommit(hash);
+            }
             return new Commit(hash, commit.get(0), commit.get(1),
                     commit.get(2), commit.get(3), commit.get(4), commit.get(5), vcsDirectory);
         } catch (Exception e) {
@@ -171,5 +174,10 @@ public class Commit extends VCSUtils {
         String hash = hash(sb.toString());
         createFile(sb.toString(), hash, vcsDirectory);
         return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree);
+    }
+    public static Commit writeInitialCommit(Path vcsDirectory) {
+        String hash = hash("");
+        createFile("", hash, vcsDirectory);
+        return new InitialCommit(hash);
     }
 }
