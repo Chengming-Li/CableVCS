@@ -480,6 +480,21 @@ public class VersionControlSystem extends VCSUtils {
     }
 
     /**
+     * Creates a new branch, which points to the last commit
+     * @param branchName: name of the new branch
+     */
+    public void branch(String branchName) {
+        try {
+            FileWriter writer = new FileWriter(branches.resolve(branchName).toFile());
+            writer.write(lastCommit.hash);
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
      * Returns the file of the head branch pointer
      * @return file object pointing to head commit
      */

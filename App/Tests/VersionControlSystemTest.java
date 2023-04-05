@@ -259,6 +259,43 @@ class VersionControlSystemTest {
             fail();
         }
     }
+
+    @org.junit.jupiter.api.Test
+    void branchTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("First Commit", "User");
+            vcs.branch("Branch");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is still the master branch");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Second Commit", "User");
+            vcs.checkout("Branch", true);
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is the new branch");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Third Commit", "User");
+            vcs.checkout("master", true);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is still the master branch");
+            vcs.checkout("Branch", true);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is the new branch");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();
         assert files != null;
