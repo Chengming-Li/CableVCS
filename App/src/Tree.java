@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Tree extends VCSUtils{
+public class Tree extends VCSUtils {
     public final String hash;
     public final Map<String, String> map;
 
@@ -20,7 +20,7 @@ public class Tree extends VCSUtils{
      * @return tree object
      */
     public static Tree findTree(String hash, Path vcsDirectory) {
-        try (BufferedReader br = new BufferedReader(new FileReader(findHash(hash, vcsDirectory).toFile()))){
+        try (BufferedReader br = new BufferedReader(new FileReader(findHash(hash, vcsDirectory).toFile()))) {
             Map<String, String> map = new HashMap<>();
             String line;
             String[] split;
@@ -49,7 +49,7 @@ public class Tree extends VCSUtils{
             if (commit == null) {
                 map = new HashMap<>();
                 for (String path : index.keySet()) {
-                    map.put(path, index.get(path).substring(0, index.get(path).length()-2));
+                    map.put(path, index.get(path).substring(0, index.get(path).length() - 2));
                 }
             } else {
                 map = new HashMap<>(commit.getTree().map);
@@ -57,7 +57,7 @@ public class Tree extends VCSUtils{
                     if (index.get(key).endsWith("2")) {
                         map.remove(key);
                     } else {
-                        map.put(key, index.get(key).substring(0, index.get(key).length()-2));
+                        map.put(key, index.get(key).substring(0, index.get(key).length() - 2));
                     }
                 }
             }

@@ -15,7 +15,8 @@ public class Commit extends VCSUtils {
     public final String message;
     public final String branch;
     private final Path vcsDirectory;
-    public Commit(String hash, String tree, String lastCommit, String time, String author, String branch, String message, Path vcsDirectory) {
+    public Commit(String hash, String tree, String lastCommit, String time,
+                  String author, String branch, String message, Path vcsDirectory) {
         this.hash = hash;
         this.tree = tree;
         this.lastHash = lastCommit;
@@ -25,7 +26,8 @@ public class Commit extends VCSUtils {
         this.message = message;
         this.vcsDirectory = vcsDirectory;
     }
-    public Commit(String hash, String tree, String lastCommit, String time, String author, String branch, String message, Path vcsDirectory, Tree treeObject) {
+    public Commit(String hash, String tree, String lastCommit, String time,
+                  String author, String branch, String message, Path vcsDirectory, Tree treeObject) {
         this.hash = hash;
         this.tree = tree;
         this.lastHash = lastCommit;
@@ -90,7 +92,8 @@ public class Commit extends VCSUtils {
     public static Commit findCommit(String hash, Path vcsDirectory) {
         try {
             List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
-            return new Commit(hash, commit.get(0), commit.get(1), commit.get(2), commit.get(3), commit.get(4), commit.get(5), vcsDirectory);
+            return new Commit(hash, commit.get(0), commit.get(1),
+                    commit.get(2), commit.get(3), commit.get(4), commit.get(5), vcsDirectory);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -150,7 +153,8 @@ public class Commit extends VCSUtils {
      * @param branch: the current branch
      * @return returns the newly created commit object
      */
-    public static Commit writeCommit(String user, String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch) {
+    public static Commit writeCommit(String user,
+                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch) {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");

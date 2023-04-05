@@ -17,8 +17,9 @@ public class VersionControlSystem extends VCSUtils {
     private final Path branches;
     private String branch;
     private Map<String, String> indexMap;
-    private static final String[] subDirectories = {"Objects", "Branches"};
-    private static final String[] files = {"HEAD", "Index", "AllCommits"};
+    private static final String[] SUBDIRECTORIES = {"Objects", "Branches"};
+    private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
+    private static final int LENGTHOFHASHANDSTATUS = 43;
     private final Map<String, Commit> commitCache;
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
@@ -27,7 +28,7 @@ public class VersionControlSystem extends VCSUtils {
         this.index = this.vcsDirectory.resolve("Index").toFile();
         this.objects = this.vcsDirectory.resolve("Objects");
         this.branches = this.vcsDirectory.resolve("Branches");
-        this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();;
+        this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();
         commitCache = new HashMap<>();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         if (lastCommit != null) {
@@ -37,7 +38,8 @@ public class VersionControlSystem extends VCSUtils {
             this.branch = Objects.requireNonNull(getHeadPath()).getName();
         }
     }
-    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index, String objects, String AllCommits) {
+    public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index,
+                                String objects, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = Paths.get(vcsDirectory);
         this.head = new File(head);
@@ -75,7 +77,7 @@ public class VersionControlSystem extends VCSUtils {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                for (String subDirectory : subDirectories) {
+                for (String subDirectory : SUBDIRECTORIES) {
                     File subfolder = new File(path.toFile(), subDirectory);
                     if (!subfolder.mkdir()) {
                         vcs.delete();
@@ -85,7 +87,7 @@ public class VersionControlSystem extends VCSUtils {
                         sub.put(subDirectory, subfolder.toPath().toAbsolutePath().toString());
                     }
                 }
-                for (String f : files) {
+                for (String f : FILES) {
                     File file = new File(path.toFile(), f);
                     try {
                         if (!file.createNewFile()) {
@@ -114,7 +116,8 @@ public class VersionControlSystem extends VCSUtils {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"), sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
+                return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"),
+                        sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
             } else {
                 System.out.println("Unable to create " + vcs.toPath());
             }
@@ -138,7 +141,7 @@ public class VersionControlSystem extends VCSUtils {
             }
             if (!file.exists()) {
                 if (lastHash != null) {
-                    this.indexMap.put(name, String.format("________________________________________ %d", hash, 2));
+                    this.indexMap.put(name, "________________________________________ 2");
                 } else {
                     System.out.println(name + " does not exist");
                     return;
@@ -203,7 +206,8 @@ public class VersionControlSystem extends VCSUtils {
     }
 
     /**
-     * Unstages the file if the file is untracked, otherwise mark the file to be removed, and delete the file if it hasn't been deleted already.
+     * Unstages the file if the file is untracked, otherwise mark the file to be removed,
+     * and delete the file if it hasn't been deleted already.
      * @param path: path to the file
      */
     public void remove(String path) {
@@ -276,7 +280,8 @@ public class VersionControlSystem extends VCSUtils {
                 if (commitCache.containsKey(line)) {
                     sb.append(commitCache.get(line).toString(true));
                 } else {
-                    sb.append(Objects.requireNonNull(Commit.findCommit(line, vcsDirectory, commitCache)).toString(true));
+                    sb.append(Objects.requireNonNull(Commit.findCommit(line, vcsDirectory, commitCache)).
+                            toString(true));
                 }
             }
             return sb.toString();
@@ -298,7 +303,7 @@ public class VersionControlSystem extends VCSUtils {
      * [modified files that are unstaged, followed by (modified) or (deleted)]
      * === Untracked Files ===
      * [untracked files]
-     * @return
+     * @return string representing the status
      */
     public String status() {
         StringBuilder sb = new StringBuilder();
@@ -320,20 +325,20 @@ public class VersionControlSystem extends VCSUtils {
             Set<String> indexFiles = new HashSet<>(indexMap.keySet());
             Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
             String line;
-            for (Path path : getWorkingDir()) {
+            for (Path path : Objects.requireNonNull(getWorkingDir())) {
                 p = this.currentDirectory.relativize(path).toString();
                 if (indexFiles.contains(p)) {
                     line = indexMap.get(p);
                     if (line.endsWith("2")) {
                         untracked.add(p);
-                    } else if (line.startsWith(Objects.requireNonNull(hash(path.toFile())))){
+                    } else if (line.startsWith(Objects.requireNonNull(hash(path.toFile())))) {
                         staged.add(p);
                     } else {
                         modified.add(p + " (modified)");
                     }
                 } else if (commitFiles.contains(p) && !lastCommit.getTree().map.get(p).equals(hash(path.toFile()))) {
                     modified.add(p + " (modified)");
-                } else if (!commitFiles.contains(p)){
+                } else if (!commitFiles.contains(p)) {
                     untracked.add(p);
                 }
                 indexFiles.remove(p);
@@ -380,6 +385,19 @@ public class VersionControlSystem extends VCSUtils {
         return sb.toString();
     }
 
+    /**
+     * If branch == false:
+     *      Checks to make sure the last commit tracked the file path given by input,
+     *      then overwrites the file's contents with the file contents in
+     *      the last commit, creating the file if necessary
+     * if branch == true:
+     *      Deletes all the files tracked in current commit but not
+     *      tracked in the head commit of the branch, given by input
+     *      Overwrites each file tracked in the head commit of the branch, creating files if necessary
+     *      Switches HEAD to point at branch
+     * @param input: file path or branch name
+     * @param branch: true if input is a branch name, false if input is file path
+     */
     public void checkout(String input, boolean branch) {
         try {
             if (!branch) {
@@ -395,7 +413,7 @@ public class VersionControlSystem extends VCSUtils {
                 }
                 Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
             } else {
-                Map<String, String> headMap = null;
+                Map<String, String> headMap;
                 Commit c = Commit.getHeadCommit(vcsDirectory, input);
                 Map<String, String> m = this.lastCommit.getTree().map;
                 if (input.equals(this.branch)) {
@@ -433,14 +451,24 @@ public class VersionControlSystem extends VCSUtils {
                     if (shortP.getParent() != null && shortP.getParent().toFile().exists()) {
                         shortP.getParent().toFile().mkdirs();
                     }
-                    Files.copy(findHash(headMap.get(name), vcsDirectory), this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(findHash(headMap.get(name), vcsDirectory),
+                            this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
                 }
                 this.branch = input;
+                FileWriter writer = new FileWriter(this.head);
+                writer.write(this.branches.resolve(input).toString());
+                writer.close();
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Overwrites the contents of file at the end of path with its contents in commit with id == commitID
+     * @param commitId: ID/Hash of a commit
+     * @param path: the path to a file
+     */
     public void checkout(String commitId, String path) {
         try {
             Path p = Path.of(path);
@@ -491,13 +519,18 @@ public class VersionControlSystem extends VCSUtils {
             BufferedReader br = new BufferedReader(new FileReader(index));
             String line;
             while ((line = br.readLine()) != null) {
-                this.indexMap.put(line.substring(0, line.length()-43), line.substring(line.length()-43));
+                this.indexMap.put(line.substring(0, line.length() - LENGTHOFHASHANDSTATUS),
+                        line.substring(line.length() - LENGTHOFHASHANDSTATUS));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Returns a Set of paths to each branch file
+     * @return set of paths
+     */
     private Set<Path> getBranches() {
         try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
             return new HashSet<>(walk.toList());
@@ -507,14 +540,24 @@ public class VersionControlSystem extends VCSUtils {
         }
     }
 
+    /**
+     * Returns a Set of the paths of all files in the working directory, excluding the .vcs subdirectory
+     * @return set of paths
+     */
     private Set<Path> getWorkingDir() {
-        try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).filter(path -> !path.startsWith(vcsDirectory))) {
+        try (Stream<Path> walk = Files.walk(currentDirectory).filter(path -> !Files.isDirectory(path)).
+                filter(path -> !path.startsWith(vcsDirectory))) {
             return new HashSet<>(walk.toList());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
+
+    /**
+     * Returns a commit object representing the last commit
+     * @return commit object
+     */
     public Commit getLastCommit() {
         return lastCommit;
     }
