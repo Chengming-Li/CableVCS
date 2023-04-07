@@ -401,51 +401,14 @@ public class VersionControlSystem extends VCSUtils {
                 }
                 Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
             } else {
-                Map<String, String> headMap;
                 Commit c = Commit.getHeadCommit(vcsDirectory, input);
-                Map<String, String> m = this.lastCommit.getTree().map;
-                if (input.equals(this.branch)) {
-                    System.out.println("No need to checkout the current branch.");
-                    return;
-                } else if (c == null) {
-                    System.out.println("No such branch exists.");
-                    return;
-                } else {
-                    headMap = c.getTree().map;
-                    String name;
-                    Set<String> names = new HashSet<>();
-                    for (Path path : Objects.requireNonNull(getWorkingDir())) {
-                        name = this.currentDirectory.relativize(path).toString();
-                        if (headMap.containsKey(name) && !m.containsKey(name)) {
-                            names.add(name);
-                        }
-                    }
-                    if (names.size() > 0) {
-                        System.out.println("There are untracked files in the way; delete it or add it first.");
-                        for (String n : names) {
-                            System.out.println(n);
-                        }
-                        return;
-                    }
+                if (performCheckout(c)) {
+                    this.branch = input;
+                    FileWriter writer = new FileWriter(this.head);
+                    writer.write(this.branches.resolve(input).toString());
+                    writer.close();
+                    this.lastCommit = c;
                 }
-                for (String name : m.keySet()) {
-                    if (!headMap.containsKey(name)) {
-                        this.currentDirectory.resolve(name).toFile().delete();
-                    }
-                }
-                Path shortP;
-                for (String name : headMap.keySet()) {
-                    shortP = Path.of(name);
-                    if (shortP.getParent() != null && shortP.getParent().toFile().exists()) {
-                        shortP.getParent().toFile().mkdirs();
-                    }
-                    Files.copy(findHash(headMap.get(name), vcsDirectory),
-                            this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
-                }
-                this.branch = input;
-                FileWriter writer = new FileWriter(this.head);
-                writer.write(this.branches.resolve(input).toString());
-                writer.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -517,6 +480,102 @@ public class VersionControlSystem extends VCSUtils {
             branch.toFile().delete();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Checks out all the files tracked by the given commit.
+     * Removes tracked files that are not present in that commit.
+     * Also moves the current branch's head to that commit node.
+     * @param commitID: hash of commit to be reset to. If no commitID is entered, it'll use the last commit
+     */
+    public void reset(String commitID) {
+        try {
+            Commit c = Commit.findCommit(commitID, vcsDirectory, commitCache);
+            if (performCheckout(c)) {
+                FileWriter writer = new FileWriter(this.branches.resolve(branch).toFile());
+                writer.write(c.hash);
+                writer.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void reset() {
+        try {
+            Commit c = lastCommit;
+            if (performCheckout(c)) {
+                FileWriter writer = new FileWriter(this.branches.resolve(branch).toFile());
+                writer.write(c.hash);
+                writer.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * checks to make sure none of the failure cases of checkout occurs
+     * @param c: commit object of the commit to check out to
+     * @param m: map, which is last commit's tree
+     * @return: null if failure, map of the target commit if success
+     */
+    private Map<String, String> checkoutCheck(Commit c, Map<String, String> m) {
+        Map<String, String> map;
+        if (c == null) {
+            System.out.println("No such branch exists.");
+            return null;
+        } else {
+            map = c.getTree().map;
+            String name;
+            Set<String> names = new HashSet<>();
+            for (Path path : Objects.requireNonNull(getWorkingDir())) {
+                name = this.currentDirectory.relativize(path).toString();
+                if (map.containsKey(name) && !m.containsKey(name)) {
+                    names.add(name);
+                }
+            }
+            if (names.size() > 0) {
+                System.out.println("There are untracked files in the way; delete it or add it first.");
+                for (String n : names) {
+                    System.out.println(n);
+                }
+                return null;
+            }
+        }
+        return map;
+    }
+
+    /**
+     * performs the check out operations, see checkout()
+     * @param c: object representing target commit
+     * @return false if failure, true otherwise
+     */
+    private boolean performCheckout(Commit c) {
+        try {
+            Map<String, String> m = this.lastCommit.getTree().map;
+            Map<String, String> headMap = checkoutCheck(c, m);
+            if (headMap == null) {
+                return false;
+            }
+            for (String name : m.keySet()) {
+                if (!headMap.containsKey(name)) {
+                    this.currentDirectory.resolve(name).toFile().delete();
+                }
+            }
+            Path shortP;
+            for (String name : headMap.keySet()) {
+                shortP = Path.of(name);
+                if (shortP.getParent() != null && !shortP.getParent().toFile().exists()) {
+                    shortP.getParent().toFile().mkdirs();
+                }
+                Files.copy(findHash(headMap.get(name), vcsDirectory),
+                        this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

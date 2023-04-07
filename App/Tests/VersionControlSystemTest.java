@@ -261,6 +261,53 @@ class VersionControlSystemTest {
     }
 
     @org.junit.jupiter.api.Test
+    void checkoutTest5() {  // should print "There are untracked files in the way; delete it or add it first.\n testText1.txt"
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("First Commit", "User");
+            vcs.branch("Branch");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is still the master branch");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Second Commit", "User");
+            vcs.checkout("Branch", true);
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is some nice text, yada yada");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is the new branch");
+            writer.close();
+            Path otherPath = Path.of(TESTDIR + "\\testText1.txt");
+            writer = new FileWriter(otherPath.toFile());
+            writer.write("This is not the burner file");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.add(otherPath.toString());
+            vcs.commit("Third Commit", "User");
+            vcs.checkout("master", true);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is still the master branch");
+            assertFalse(otherPath.toFile().exists());
+            writer = new FileWriter(otherPath.toFile());
+            writer.write("This is THE burner file");
+            writer.close();
+            vcs.checkout("Branch", true);
+            otherPath.toFile().delete();
+            vcs.checkout("Branch", true);
+            pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is the new branch");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+        @org.junit.jupiter.api.Test
     void branchTest() {
         VersionControlSystem vcs = cleanUp();
         try {
@@ -309,6 +356,48 @@ class VersionControlSystemTest {
             vcs.checkout("Branch", true);
             vcs.removeBranch("master");
             assertFalse((new File(path.resolve(".vcs").resolve("Branches").resolve("master").toString())).exists());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    void resetTest() {  // should print "There are untracked files in the way; delete it or add it first.\n testText1.txt"
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("First Commit", "User");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is still the master branch");
+            writer.close();
+            Path otherPath = Path.of(TESTDIR + "\\testText1.txt");
+            writer = new FileWriter(otherPath.toFile());
+            writer.write("This is not the burner file");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.add(otherPath.toString());
+            vcs.commit("Second Commit", "User");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is stilll the master branch");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.remove(otherPath.toString());
+            vcs.commit("Third Commit", "User");
+            assertFalse(otherPath.toFile().exists());
+            writer = new FileWriter(otherPath.toFile());
+            writer.write("This is THE burner file");
+            writer.close();
+            String hash = vcs.getLastCommit().parentCommit().hash;
+            vcs.reset(hash);
+            otherPath.toFile().delete();
+            vcs.reset(hash);
+            String pathContents = Files.readAllLines(path).get(0);
+            assertEquals(pathContents, "This is still the master branch");
         } catch (Exception e) {
             e.printStackTrace();
             fail();

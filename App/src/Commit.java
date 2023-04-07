@@ -110,14 +110,18 @@ public class Commit extends VCSUtils {
     }
 
     /**
-     * returns commit object representing the head commit
+     * returns commit object representing the head commit of a branch
      * @param vcsDirectory: the Path to the .vcs directory
+     * @param branch: the branch the returned head commit belongs to. If no branch is entered, use current branch
      * @return commit object
      */
-    public static Commit getHeadCommit(Path vcsDirectory) {
+    public static Commit getHeadCommit(Path vcsDirectory, String branch) {
         try {
-            String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
-            List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
+            Path p = vcsDirectory.resolve("Branches").resolve(branch);
+            if (!Files.exists(p)) {
+                return null;
+            }
+            List<String> lastCommit = Files.readAllLines(p);
             if (lastCommit.size() == 0) {
                 return null;
             } else {
@@ -128,13 +132,10 @@ public class Commit extends VCSUtils {
             return null;
         }
     }
-    public static Commit getHeadCommit(Path vcsDirectory, String branch) {
+    public static Commit getHeadCommit(Path vcsDirectory) {
         try {
-            Path p = vcsDirectory.resolve("Branches").resolve(branch);
-            if (!Files.exists(p)) {
-                return null;
-            }
-            List<String> lastCommit = Files.readAllLines(p);
+            String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
+            List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
             if (lastCommit.size() == 0) {
                 return null;
             } else {
@@ -175,6 +176,12 @@ public class Commit extends VCSUtils {
         createFile(sb.toString(), hash, vcsDirectory);
         return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree);
     }
+
+    /**
+     * Creates an initial commit object
+     * @param vcsDirectory: path to the .vcs directory
+     * @return returns the newly created commit object
+     */
     public static Commit writeInitialCommit(Path vcsDirectory) {
         String hash = hash("");
         createFile("", hash, vcsDirectory);
