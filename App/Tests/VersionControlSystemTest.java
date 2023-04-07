@@ -295,6 +295,25 @@ class VersionControlSystemTest {
             fail();
         }
     }
+    @org.junit.jupiter.api.Test
+    void removeBranchTest() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("First Commit", "User");
+            vcs.branch("Branch");
+            vcs.checkout("Branch", true);
+            vcs.removeBranch("master");
+            assertFalse((new File(path.resolve(".vcs").resolve("Branches").resolve("master").toString())).exists());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
 
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();

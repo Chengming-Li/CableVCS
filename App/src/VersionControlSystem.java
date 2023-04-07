@@ -21,6 +21,7 @@ public class VersionControlSystem extends VCSUtils {
     private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
     private final Map<String, Commit> commitCache;
+    private Set<Path> branchSet;
     public VersionControlSystem(String currentDirectory) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
@@ -484,8 +485,13 @@ public class VersionControlSystem extends VCSUtils {
      * @param branchName: name of the new branch
      */
     public void branch(String branchName) {
+        Path branch = branches.resolve(branchName);
+        if (Objects.requireNonNull(getBranches()).contains(branch)) {
+            System.out.println("branch with that name already exists.");
+            return;
+        }
         try {
-            FileWriter writer = new FileWriter(branches.resolve(branchName).toFile());
+            FileWriter writer = new FileWriter(branch.toFile());
             writer.write(lastCommit.hash);
             writer.close();
         } catch (Exception e) {
@@ -493,6 +499,26 @@ public class VersionControlSystem extends VCSUtils {
         }
     }
 
+    /**
+     * Removes the branch pointer in the Branches folder
+     * @param branchName: name of branch to be removed
+     */
+    public void removeBranch(String branchName) {
+        Path branch = branches.resolve(branchName);
+        if (this.branch.equals(branchName)) {
+            System.out.println("Cannot remove the current branch.");
+            return;
+        }
+        else if (!Objects.requireNonNull(getBranches()).contains(branch)) {
+            System.out.println("A branch with that name does not exist.");
+            return;
+        }
+        try {
+            branch.toFile().delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Returns the file of the head branch pointer
@@ -534,8 +560,12 @@ public class VersionControlSystem extends VCSUtils {
      * @return set of paths
      */
     private Set<Path> getBranches() {
+        if (this.branchSet != null) {
+            return branchSet;
+        }
         try (Stream<Path> walk = Files.walk(branches).filter(path -> !Files.isDirectory(path))) {
-            return new HashSet<>(walk.toList());
+            this.branchSet = new HashSet<>(walk.toList());
+            return branchSet;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
