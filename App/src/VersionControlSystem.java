@@ -13,11 +13,11 @@ public class VersionControlSystem extends VCSUtils {
     private final File index;
     private Commit lastCommit;
     private final File AllCommits;
-    private final Path objects;
+    private final Path tasks;
     private final Path branches;
     private String branch;
     private Map<String, String> indexMap;
-    private static final String[] SUBDIRECTORIES = {"Objects", "Branches"};
+    private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks", "Tasks\\Opened", "Tasks\\Closed"};
     private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
     private final Map<String, Commit> commitCache;
@@ -27,7 +27,7 @@ public class VersionControlSystem extends VCSUtils {
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
         this.head = this.vcsDirectory.resolve("HEAD").toFile();
         this.index = this.vcsDirectory.resolve("Index").toFile();
-        this.objects = this.vcsDirectory.resolve("Objects");
+        this.tasks = this.vcsDirectory.resolve("Objects");
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();
         this.commitCache = new HashMap<>();
@@ -37,12 +37,12 @@ public class VersionControlSystem extends VCSUtils {
         this.branch = lastCommit.branch;
     }
     public VersionControlSystem(String currentDirectory, String vcsDirectory, String head, String index,
-                                String objects, String AllCommits) {
+                                String task, String AllCommits) {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = Paths.get(vcsDirectory);
         this.head = new File(head);
         this.index = new File(index);
-        this.objects = Paths.get(objects);
+        this.tasks = Paths.get(task);
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = new File(AllCommits);
         this.commitCache = new HashMap<>();
@@ -97,7 +97,7 @@ public class VersionControlSystem extends VCSUtils {
                     writer.write(path.resolve("Branches").resolve("master").toString());
                     writer.close();
                     return new VersionControlSystem(dir, path.toString(), sub.get("HEAD"),
-                            sub.get("Index"), sub.get("Objects"), sub.get("AllCommits"));
+                            sub.get("Index"), sub.get("Tasks"), sub.get("AllCommits"));
                 } else {
                     System.out.println("Unable to create " + vcs.toPath());
                 }
@@ -515,10 +515,75 @@ public class VersionControlSystem extends VCSUtils {
     }
 
     /**
+     * Creates a new task
+     * @param taskName: name of the task
+     * @param taskDescription: Description of the task
+     * @param closed: is re-opening a closed task
+     */
+    public void openTask(String taskName, String taskDescription, boolean closed) {
+        try {
+            Path p = this.tasks.resolve("Opened").resolve(taskName);
+            if (closed) {
+                Path source = this.tasks.resolve("Closed").resolve(taskName);
+                if (!taskExists(taskName, true)) {
+                    System.out.println("Task does not exist");
+                    return;
+                }
+                Files.move(source, p);
+            } else {
+                if (p.toFile().exists()) {
+                    System.out.println("Task already exists");
+                    return;
+                }
+                FileWriter writer = new FileWriter(p.toFile());
+                writer.write(taskDescription);
+                writer.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Closes a task
+     * @param taskName: name of task to be closed
+     */
+    public void closeTask(String taskName) {
+        try {
+            if (!taskExists(taskName, false)) {
+                System.out.println("Task does not exist");
+                return;
+            } else {
+                Path p = this.tasks.resolve("Closed").resolve(taskName);
+                Path source = this.tasks.resolve("Opened").resolve(taskName);
+                Files.move(source, p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Checks to make sure the tasks exists
+     * @param taskName: name of task
+     * @param closed: is closed or not
+     * @return a boolean if the tasks exists
+     */
+    private boolean taskExists(String taskName, boolean closed) {
+        String subdiv;
+        if (closed) {
+            subdiv = "Closed";
+        } else {
+            subdiv = "Opened";
+        }
+        return this.tasks.resolve(subdiv).resolve(taskName).toFile().exists();
+    }
+
+    /**
      * checks to make sure none of the failure cases of checkout occurs
      * @param c: commit object of the commit to check out to
      * @param m: map, which is last commit's tree
-     * @return: null if failure, map of the target commit if success
+     * @return null if failure, map of the target commit if success
      */
     private Map<String, String> checkoutCheck(Commit c, Map<String, String> m) {
         Map<String, String> map;

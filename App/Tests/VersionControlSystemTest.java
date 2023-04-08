@@ -398,6 +398,29 @@ class VersionControlSystemTest {
             vcs.reset(hash);
             String pathContents = Files.readAllLines(path).get(0);
             assertEquals(pathContents, "This is still the master branch");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is stilll the master branch");
+            writer.close();
+            vcs.reset();
+            assertEquals(pathContents, "This is still the master branch");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    void taskTest() {
+        try {
+            VersionControlSystem vcs = cleanUp();
+            vcs.openTask("Task 1", "", false);
+            assertTrue(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
+            vcs.closeTask("Task 1");
+            assertFalse(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
+            assertTrue(new File(VCSDIR+"\\Tasks\\Closed\\Task 1").exists());
+            vcs.openTask("Task 1", "", true);
+            assertTrue(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
+            assertFalse(new File(VCSDIR+"\\Tasks\\Closed\\Task 1").exists());
         } catch (Exception e) {
             e.printStackTrace();
             fail();
