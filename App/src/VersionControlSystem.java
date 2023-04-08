@@ -192,6 +192,20 @@ public class VersionControlSystem extends VCSUtils {
         }
     }
 
+    /**
+     * Creates a commit, which includes 6 lines:
+     *      *  [tree]
+     *      *  [previous commit]
+     *      *  [time]
+     *      *  [author]
+     *      *  [branch]
+     *      *  [message]
+     * Also opens and closes tasks
+     * @param message: string, message for the commit
+     * @param user: string, the author of the commit
+     * @param closeTasks: array of strings corresponding to task name
+     * @param openTasks: array of arrays of strings, the first element is the task name, second is task description
+     */
     public void commit(String message, String user, String[] closeTasks, String[][] openTasks) {
         if (commit(message, user)) {
             for (String task : closeTasks) {
