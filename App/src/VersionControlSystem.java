@@ -161,14 +161,15 @@ public class VersionControlSystem extends VCSUtils {
      *  [message]
      * @param message: string, message for the commit
      * @param user: string, the author of the commit
+     * @return true if commit was a success, false if otherwise
      */
-    public void commit(String message, String user) {
+    public boolean commit(String message, String user) {
         if (this.indexMap == null || this.indexMap.keySet().size() == 0) {
             System.out.println("No changes added to the commit");
-            return;
+            return false;
         } else if (message.length() == 0) {
             System.out.println("Please enter a commit message.");
-            return;
+            return false;
         }
         try {
             readIndex();
@@ -184,8 +185,21 @@ public class VersionControlSystem extends VCSUtils {
             fw = new FileWriter(this.AllCommits, true);
             fw.write(lastCommit.hash + "\n");
             fw.close();
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
+        }
+    }
+
+    public void commit(String message, String user, String[] closeTasks, String[][] openTasks) {
+        if (commit(message, user)) {
+            for (String task : closeTasks) {
+                closeTask(task);
+            }
+            for (String[] task : openTasks) {
+                openTask(task[0], task[1], false);
+            }
         }
     }
 
