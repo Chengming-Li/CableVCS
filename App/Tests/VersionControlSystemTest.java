@@ -308,7 +308,7 @@ class VersionControlSystemTest {
         }
     }
 
-        @org.junit.jupiter.api.Test
+    @org.junit.jupiter.api.Test
     void branchTest() {
         VersionControlSystem vcs = cleanUp();
         try {

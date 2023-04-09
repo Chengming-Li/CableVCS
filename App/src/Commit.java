@@ -2,8 +2,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Commit extends VCSUtils {
     public final String hash;
@@ -15,8 +14,11 @@ public class Commit extends VCSUtils {
     public final String message;
     public final String branch;
     private final Path vcsDirectory;
+    public final Set<String> closed;
+    public final Set<String> opened;
+
     public Commit(String hash, String tree, String lastCommit, String time,
-                  String author, String branch, String message, Path vcsDirectory) {
+                  String author, String branch, String message, Path vcsDirectory, Set<String> closed, Set<String> opened) {
         this.hash = hash;
         this.tree = tree;
         this.lastHash = lastCommit;
@@ -25,9 +27,11 @@ public class Commit extends VCSUtils {
         this.branch = branch;
         this.message = message;
         this.vcsDirectory = vcsDirectory;
+        this.closed = closed;
+        this.opened = opened;
     }
     public Commit(String hash, String tree, String lastCommit, String time,
-                  String author, String branch, String message, Path vcsDirectory, Tree treeObject) {
+                  String author, String branch, String message, Path vcsDirectory, Tree treeObject, Set<String> closed, Set<String> opened) {
         this.hash = hash;
         this.tree = tree;
         this.lastHash = lastCommit;
@@ -37,6 +41,8 @@ public class Commit extends VCSUtils {
         this.message = message;
         this.vcsDirectory = vcsDirectory;
         this.treeObject = treeObject;
+        this.closed = closed;
+        this.opened = opened;
     }
 
     /**
@@ -95,8 +101,26 @@ public class Commit extends VCSUtils {
             if (commit.size() == 0) {
                 return new InitialCommit(hash);
             }
+            int i = 6;
+            Set<String> opened = new HashSet<>();
+            while (!"===".equals(commit.get(i))) {
+                opened.add(commit.get(i));
+                i++;
+            }
+            i++;
+            Set<String> closed = new HashSet<>();
+            while (!"===".equals(commit.get(i))) {
+                closed.add(commit.get(i));
+                i++;
+            }
+            i++;
+            StringBuilder sb = new StringBuilder();
+            while (i < commit.size()) {
+                sb.append(commit.get(i)).append("\n");
+                i++;
+            }
             return new Commit(hash, commit.get(0), commit.get(1),
-                    commit.get(2), commit.get(3), commit.get(4), commit.get(5), vcsDirectory);
+                    commit.get(2), commit.get(3), commit.get(4), sb.toString(), vcsDirectory, opened, closed);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -158,7 +182,7 @@ public class Commit extends VCSUtils {
      * @return returns the newly created commit object
      */
     public static Commit writeCommit(String user,
-                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch) {
+                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[][] opened) {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");
@@ -171,10 +195,21 @@ public class Commit extends VCSUtils {
             sb.append(current.hash).append("\n");
             lastHash = current.hash;
         }
-        sb.append(time).append("\n").append(user).append("\n").append(branch).append("\n").append(message);
+        sb.append(time).append("\n").append(user).append("\n").append(branch).append("\n===\n");
+        for (String s : closed) {
+            sb.append(s).append("\n");
+        }
+        Set<String> o = new HashSet<>();
+        sb.append("===\n");
+        for (String[] s : opened) {
+            sb.append(s[0]).append("\n");
+            o.add(s[0]);
+        }
+        sb.append("===\n");
+        sb.append(message);
         String hash = hash(sb.toString());
         createFile(sb.toString(), hash, vcsDirectory);
-        return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree);
+        return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree, new HashSet<>(Arrays.asList(closed)), o);
     }
 
     /**

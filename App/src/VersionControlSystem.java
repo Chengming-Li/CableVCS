@@ -152,18 +152,43 @@ public class VersionControlSystem extends VCSUtils {
     }
 
     /**
-     * Creates a commit, which includes 6 lines:
-     *  [tree]
-     *  [previous commit]
-     *  [time]
-     *  [author]
-     *  [branch]
-     *  [message]
+     * Creates a commit, which includes the following lines:
+     *      *  [tree]
+     *      *  [previous commit]
+     *      *  [time]
+     *      *  [author]
+     *      *  ===
+     *      *  ===
+     *      *  ===
+     *      *  [message]
      * @param message: string, message for the commit
      * @param user: string, the author of the commit
      * @return true if commit was a success, false if otherwise
      */
     public boolean commit(String message, String user) {
+        return commit(message, user, new String[0], new String[0][0]);
+    }
+
+    /**
+     * Creates a commit, which includes the following lines:
+     *      *  [tree]
+     *      *  [previous commit]
+     *      *  [time]
+     *      *  [author]
+     *      *  [branch]
+     *      *  ===
+     *      *  [closed task]
+     *      *  ===
+     *      *  [opened tasks]
+     *      *  ===
+     *      *  [message]
+     * Also opens and closes tasks
+     * @param message: string, message for the commit
+     * @param user: string, the author of the commit
+     * @param closeTasks: array of strings corresponding to task name
+     * @param openTasks: array of arrays of strings, the first element is the task name, second is task description
+     */
+    public boolean commit(String message, String user, String[] closeTasks, String[][] openTasks) {
         if (this.indexMap == null || this.indexMap.keySet().size() == 0) {
             System.out.println("No changes added to the commit");
             return false;
@@ -173,7 +198,7 @@ public class VersionControlSystem extends VCSUtils {
         }
         try {
             readIndex();
-            this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch);
+            this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks);
             commitCache.put(lastCommit.hash, lastCommit);
             FileWriter fw = new FileWriter(Objects.requireNonNull(getHeadPath()), false);
             fw.write(lastCommit.hash);
@@ -185,35 +210,16 @@ public class VersionControlSystem extends VCSUtils {
             fw = new FileWriter(this.AllCommits, true);
             fw.write(lastCommit.hash + "\n");
             fw.close();
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Creates a commit, which includes 6 lines:
-     *      *  [tree]
-     *      *  [previous commit]
-     *      *  [time]
-     *      *  [author]
-     *      *  [branch]
-     *      *  [message]
-     * Also opens and closes tasks
-     * @param message: string, message for the commit
-     * @param user: string, the author of the commit
-     * @param closeTasks: array of strings corresponding to task name
-     * @param openTasks: array of arrays of strings, the first element is the task name, second is task description
-     */
-    public void commit(String message, String user, String[] closeTasks, String[][] openTasks) {
-        if (commit(message, user)) {
             for (String task : closeTasks) {
                 closeTask(task);
             }
             for (String[] task : openTasks) {
                 openTask(task[0], task[1], false);
             }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
