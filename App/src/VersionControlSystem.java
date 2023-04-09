@@ -315,58 +315,26 @@ public class VersionControlSystem extends VCSUtils {
      * [modified files that are unstaged, followed by (modified) or (deleted)]
      * === Untracked Files ===
      * [untracked files]
+     * @param sets: an array of 5 Sets, representing the branches, staged files, modified files, untracked files, and removed files
+     *            If no array is entered, will call statusHelper() and enter the returned array
      * @return string representing the status
      */
-    public String status() {
+    public String status(Set<String>[] sets) {
         StringBuilder sb = new StringBuilder();
         try {
-            sb.append("=== Branches ===\n");
-            for (Path path : Objects.requireNonNull(getBranches())) {
-                if (path.getFileName().toString().equals(branch)) {
-                    sb.append("*").append(path.getFileName()).append("\n");
+            Set<String> branches = sets[0];
+            Set<String> staged = sets[1];
+            Set<String> modified = sets[2];
+            Set<String> untracked = sets[3];
+            Set<String> removed = sets[4];
+            for (String branch : branches) {
+                if (branch.equals(this.branch)) {
+                    sb.insert(0, "*"+branch+"\n");
                 } else {
-                    sb.append(path.getFileName()).append("\n");
+                    sb.append(branch).append("\n");
                 }
             }
-            readIndex();
-            String p;
-            Set<String> staged = new HashSet<>();
-            Set<String> modified = new HashSet<>();
-            Set<String> untracked = new HashSet<>();
-            Set<String> removed = new HashSet<>();
-            Set<String> indexFiles = new HashSet<>(indexMap.keySet());
-            Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
-            String line;
-            for (Path path : Objects.requireNonNull(getWorkingDir())) {
-                p = this.currentDirectory.relativize(path).toString();
-                if (indexFiles.contains(p)) {
-                    line = indexMap.get(p);
-                    if (line.endsWith("2")) {
-                        untracked.add(p);
-                    } else if (line.startsWith(Objects.requireNonNull(hash(path.toFile())))) {
-                        staged.add(p);
-                    } else {
-                        modified.add(p + " (modified)");
-                    }
-                } else if (commitFiles.contains(p) && !lastCommit.getTree().map.get(p).equals(hash(path.toFile()))) {
-                    modified.add(p + " (modified)");
-                } else if (!commitFiles.contains(p)) {
-                    untracked.add(p);
-                }
-                indexFiles.remove(p);
-                commitFiles.remove(p);
-            }
-            for (String i : indexFiles) {
-                if (indexMap.get(i).endsWith("2")) {
-                    removed.add(i);
-                } else {
-                    modified.add(i + " (deleted)");
-                }
-                commitFiles.remove(i);
-            }
-            for (String i : commitFiles) {
-                modified.add(i + " (deleted)");
-            }
+            sb.insert(0, "=== Branches ===\n");
             if (!staged.isEmpty()) {
                 sb.append("=== Staged Files ===\n");
                 for (String f : staged) {
@@ -395,6 +363,9 @@ public class VersionControlSystem extends VCSUtils {
             e.printStackTrace();
         }
         return sb.toString();
+    }
+    public String status() {
+        return status(statusHelper());
     }
 
     /**
@@ -429,6 +400,7 @@ public class VersionControlSystem extends VCSUtils {
                 }
                 Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
             } else {
+                // check to see if branch exists
                 Commit c = Commit.getHeadCommit(vcsDirectory, input);
                 if (performCheckout(c)) {
                     this.branch = input;
@@ -478,13 +450,14 @@ public class VersionControlSystem extends VCSUtils {
     public void branch(String branchName) {
         Path branch = branches.resolve(branchName);
         if (Objects.requireNonNull(getBranches()).contains(branch)) {
-            System.out.println("branch with that name already exists.");
+            System.out.println("Branch with that name already exists.");
             return;
         }
         try {
             FileWriter writer = new FileWriter(branch.toFile());
             writer.write(lastCommit.hash);
             writer.close();
+            this.branchSet.add(branch);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -744,5 +717,68 @@ public class VersionControlSystem extends VCSUtils {
      */
     public Commit getLastCommit() {
         return lastCommit;
+    }
+
+    /**
+     * Returns an array of string sets
+     * Array:
+     *  [0]: branches
+     *  [1]: staged files
+     *  [2]: modified files(to get the name, exclude the last 11 characters)
+     *  [3]: untracked files
+     *  [4]: removed files
+     * @return an array of sets
+     */
+    public Set<String>[] statusHelper() {
+        Set<String> branches = new HashSet<>();
+        for (Path path : Objects.requireNonNull(getBranches())) {
+            branches.add(path.getFileName().toString());
+        }
+        readIndex();
+        String p;
+        Set<String> staged = new HashSet<>();
+        Set<String> modified = new HashSet<>();
+        Set<String> untracked = new HashSet<>();
+        Set<String> removed = new HashSet<>();
+        Set<String> indexFiles = new HashSet<>(indexMap.keySet());
+        Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
+        String line;
+        for (Path path : Objects.requireNonNull(getWorkingDir())) {
+            p = this.currentDirectory.relativize(path).toString();
+            if (indexFiles.contains(p)) {
+                line = indexMap.get(p);
+                if (line.endsWith("2")) {
+                    untracked.add(p);
+                } else if (line.startsWith(Objects.requireNonNull(hash(path.toFile())))) {
+                    staged.add(p);
+                } else {
+                    modified.add(p + " (modified)");
+                }
+            } else if (commitFiles.contains(p) && !lastCommit.getTree().map.get(p).equals(hash(path.toFile()))) {
+                modified.add(p + " (modified)");
+            } else if (!commitFiles.contains(p)) {
+                untracked.add(p);
+            }
+            indexFiles.remove(p);
+            commitFiles.remove(p);
+        }
+        for (String i : indexFiles) {
+            if (indexMap.get(i).endsWith("2")) {
+                removed.add(i);
+            } else {
+                modified.add(i + " (deleted) ");
+            }
+            commitFiles.remove(i);
+        }
+        for (String i : commitFiles) {
+            modified.add(i + " (deleted) ");
+        }
+        Set<String>[] setArray = new HashSet[5];
+        setArray[0] = branches;
+        setArray[1] = staged;
+        setArray[2] = modified;
+        setArray[3] = untracked;
+        setArray[4] = removed;
+        return setArray;
     }
 }
