@@ -158,15 +158,17 @@ public class VersionControlSystem extends VCSUtils {
      *      *  [time]
      *      *  [author]
      *      *  ===
+     *      *  [open commits]
      *      *  ===
+     *      *  [closed commits]
      *      *  ===
      *      *  [message]
      * @param message: string, message for the commit
      * @param user: string, the author of the commit
      * @return true if commit was a success, false if otherwise
      */
-    public boolean commit(String message, String user) {
-        return commit(message, user, new String[0], new String[0][0]);
+    public void commit(String message, String user) {
+        commit(message, user, new String[0], new String[0][0]);
     }
 
     /**
@@ -188,15 +190,21 @@ public class VersionControlSystem extends VCSUtils {
      * @param closeTasks: array of strings corresponding to task name
      * @param openTasks: array of arrays of strings, the first element is the task name, second is task description
      */
-    public boolean commit(String message, String user, String[] closeTasks, String[][] openTasks) {
+    public void commit(String message, String user, String[] closeTasks, String[][] openTasks) {
         if (this.indexMap == null || this.indexMap.keySet().size() == 0) {
             System.out.println("No changes added to the commit");
-            return false;
+            return;
         } else if (message.length() == 0) {
             System.out.println("Please enter a commit message.");
-            return false;
+            return;
         }
         try {
+            for (String task : closeTasks) {
+                // do smth
+            }
+            for (String[] task : openTasks) {
+                // do smth
+            }
             readIndex();
             this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks);
             commitCache.put(lastCommit.hash, lastCommit);
@@ -210,16 +218,8 @@ public class VersionControlSystem extends VCSUtils {
             fw = new FileWriter(this.AllCommits, true);
             fw.write(lastCommit.hash + "\n");
             fw.close();
-            for (String task : closeTasks) {
-                closeTask(task);
-            }
-            for (String[] task : openTasks) {
-                openTask(task[0], task[1], false);
-            }
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
 
@@ -519,71 +519,6 @@ public class VersionControlSystem extends VCSUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Creates a new task
-     * @param taskName: name of the task
-     * @param taskDescription: Description of the task
-     * @param closed: is re-opening a closed task
-     */
-    public void openTask(String taskName, String taskDescription, boolean closed) {
-        try {
-            Path p = this.tasks.resolve("Opened").resolve(taskName);
-            if (closed) {
-                Path source = this.tasks.resolve("Closed").resolve(taskName);
-                if (!taskExists(taskName, true)) {
-                    System.out.println("Task does not exist");
-                    return;
-                }
-                Files.move(source, p);
-            } else {
-                if (p.toFile().exists()) {
-                    System.out.println("Task already exists");
-                    return;
-                }
-                FileWriter writer = new FileWriter(p.toFile());
-                writer.write(taskDescription);
-                writer.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Closes a task
-     * @param taskName: name of task to be closed
-     */
-    public void closeTask(String taskName) {
-        try {
-            if (!taskExists(taskName, false)) {
-                System.out.println("Task does not exist");
-                return;
-            } else {
-                Path p = this.tasks.resolve("Closed").resolve(taskName);
-                Path source = this.tasks.resolve("Opened").resolve(taskName);
-                Files.move(source, p);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Checks to make sure the tasks exists
-     * @param taskName: name of task
-     * @param closed: is closed or not
-     * @return a boolean if the tasks exists
-     */
-    private boolean taskExists(String taskName, boolean closed) {
-        String subdiv;
-        if (closed) {
-            subdiv = "Closed";
-        } else {
-            subdiv = "Opened";
-        }
-        return this.tasks.resolve(subdiv).resolve(taskName).toFile().exists();
     }
 
     /**

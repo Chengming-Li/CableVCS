@@ -410,45 +410,6 @@ class VersionControlSystemTest {
         }
     }
 
-    @org.junit.jupiter.api.Test
-    void taskTest() {
-        try {
-            VersionControlSystem vcs = cleanUp();
-            vcs.openTask("Task 1", "", false);
-            assertTrue(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
-            vcs.closeTask("Task 1");
-            assertFalse(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
-            assertTrue(new File(VCSDIR+"\\Tasks\\Closed\\Task 1").exists());
-            vcs.openTask("Task 1", "", true);
-            assertTrue(new File(VCSDIR+"\\Tasks\\Opened\\Task 1").exists());
-            assertFalse(new File(VCSDIR+"\\Tasks\\Closed\\Task 1").exists());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-    @org.junit.jupiter.api.Test
-    void taskTest2() {
-        VersionControlSystem vcs = cleanUp();
-        try {
-            Path path = Path.of(TESTDIR + "\\testText.txt");
-            FileWriter writer = new FileWriter(path.toFile());
-            writer.write("This is some nice text, yada yada");
-            writer.close();
-            vcs.add(path.toString());
-            vcs.commit("First Commit", "User", new String[0], new String[][]{{"Change this text", "Change to \"This is some REALLY nice text\""}});
-            writer = new FileWriter(path.toFile());
-            writer.write("This is some REALLY nice text");
-            writer.close();
-            vcs.add(path.toString());
-            vcs.commit("Second Commit", "User", new String[]{"Change this text"}, new String[0][]);
-            assertTrue(new File(VCSDIR+"\\Tasks\\Closed\\Change this text").exists());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
     private static VersionControlSystem cleanUp() {
         File[] files = new File(TESTDIR).listFiles();
         assert files != null;
