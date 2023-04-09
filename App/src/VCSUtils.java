@@ -14,7 +14,7 @@ public class VCSUtils {
      * @param path: path to the file
      * @return returns the string hash for the file
      */
-    public static String hash(File path) {
+    public static String hash(File path) throws Exception {
         try (FileInputStream fis = new FileInputStream(path)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             byte[] dataBytes = new byte[1024];
@@ -30,11 +30,10 @@ public class VCSUtils {
             }
             return sb.toString();
         } catch (Exception e) {
-            System.out.println("Hash failed for " + path + "due to:\n" + e.getMessage());
-            return null;
+            throw new Exception("Hash failed for " + path + "due to:\n" + e.getMessage());
         }
     }
-    public static String hash(String input) {
+    public static String hash(String input) throws Exception {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
             md.update(input.getBytes());
@@ -45,8 +44,7 @@ public class VCSUtils {
             }
             return sb.toString();
         } catch (Exception e) {
-            System.out.println("Hash failed due to:\n" + e.getMessage());
-            return null;
+            throw new Exception("Hash failed due to:\n" + e.getMessage());
         }
     }
 
@@ -56,7 +54,7 @@ public class VCSUtils {
      * @param hash: the hashcode of the file, for naming and bin assignment purposes
      * @return boolean whether the creation was successful or not
      */
-    public static boolean createFile(File path, String hash, Path vcsDirectory) {
+    public static boolean createFile(File path, String hash, Path vcsDirectory) throws Exception {
         if (hashExists(hash, vcsDirectory)) {
             return true;
         } else {
@@ -66,34 +64,22 @@ public class VCSUtils {
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
             }
-            try {
                 Files.copy(source, target);
                 return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
         }
     }
-    public static boolean createFile(String contents, String hash, Path vcsDirectory) {
-        if (hashExists(hash, vcsDirectory)) {
-            return true;
-        } else {
+    public static boolean createFile(String contents, String hash, Path vcsDirectory) throws Exception {
+        if (!hashExists(hash, vcsDirectory)) {
             File target = findHash(hash, vcsDirectory).toFile();
             File bin = target.getParentFile();
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
             }
-            try {
-                FileWriter writer = new FileWriter(target);
-                writer.write(contents);
-                writer.close();
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
+            FileWriter writer = new FileWriter(target);
+            writer.write(contents);
+            writer.close();
         }
+        return true;
     }
 
 

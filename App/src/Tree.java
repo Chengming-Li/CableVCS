@@ -19,7 +19,7 @@ public class Tree extends VCSUtils {
      * @param vcsDirectory: path to the .vcs directory
      * @return tree object
      */
-    public static Tree findTree(String hash, Path vcsDirectory) {
+    public static Tree findTree(String hash, Path vcsDirectory) throws Exception {
         try (BufferedReader br = new BufferedReader(new FileReader(findHash(hash, vcsDirectory).toFile()))) {
             Map<String, String> map = new HashMap<>();
             String line;
@@ -29,9 +29,6 @@ public class Tree extends VCSUtils {
                 map.put(split[0], split[1]);
             }
             return new Tree(hash, map);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
     }
 
@@ -42,8 +39,7 @@ public class Tree extends VCSUtils {
      * @param commit: the current commit
      * @return a tree object
      */
-    public static Tree makeTree(Path vcsDirectory, Map<String, String> index, Commit commit) {
-        try {
+    public static Tree makeTree(Path vcsDirectory, Map<String, String> index, Commit commit) throws Exception {
             StringBuilder sb = new StringBuilder();
             Map<String, String> map;
             if (commit == null) {
@@ -67,9 +63,5 @@ public class Tree extends VCSUtils {
             String hash = hash(sb.toString());
             createFile(sb.toString(), hash, vcsDirectory);
             return new Tree(hash, map);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 }

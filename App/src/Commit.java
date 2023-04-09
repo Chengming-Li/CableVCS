@@ -50,13 +50,13 @@ public class Commit extends VCSUtils {
      * @param cache: a hash : Commit map, passed in so already created Commit objects don't need to be re-instantiated
      * @return the parent commit object
      */
-    public Commit parentCommit(Map<String, Commit> cache) {
+    public Commit parentCommit(Map<String, Commit> cache) throws Exception {
         if ("".equals(lastHash)) {
             return null;
         }
         return findCommit(lastHash, this.vcsDirectory, cache);
     }
-    public Commit parentCommit() {
+    public Commit parentCommit() throws Exception {
         if ("".equals(lastHash)) {
             return null;
         }
@@ -67,7 +67,7 @@ public class Commit extends VCSUtils {
      * Returns a tree object of the tree in this commit
      * @return tree object
      */
-    public Tree getTree() {
+    public Tree getTree() throws Exception {
         if (this.treeObject == null) {
             this.treeObject = Tree.findTree(this.tree, this.vcsDirectory);
         }
@@ -95,8 +95,7 @@ public class Commit extends VCSUtils {
      * @param vcsDirectory: Path to the .vcs directory
      * @return commit object
      */
-    public static Commit findCommit(String hash, Path vcsDirectory) {
-        try {
+    public static Commit findCommit(String hash, Path vcsDirectory) throws Exception {
             List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
             if (commit.size() == 0) {
                 return new InitialCommit(hash);
@@ -121,12 +120,8 @@ public class Commit extends VCSUtils {
             }
             return new Commit(hash, commit.get(0), commit.get(1),
                     commit.get(2), commit.get(3), commit.get(4), sb.toString(), vcsDirectory, opened, closed);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
-    public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) {
+    public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) throws Exception {
         if (cache.containsKey(hash)) {
             return cache.get(hash);
         }
@@ -139,8 +134,7 @@ public class Commit extends VCSUtils {
      * @param branch: the branch the returned head commit belongs to. If no branch is entered, use current branch
      * @return commit object
      */
-    public static Commit getHeadCommit(Path vcsDirectory, String branch) {
-        try {
+    public static Commit getHeadCommit(Path vcsDirectory, String branch) throws Exception {
             Path p = vcsDirectory.resolve("Branches").resolve(branch);
             if (!Files.exists(p)) {
                 return null;
@@ -151,13 +145,8 @@ public class Commit extends VCSUtils {
             } else {
                 return findCommit(lastCommit.get(0), vcsDirectory);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
-    public static Commit getHeadCommit(Path vcsDirectory) {
-        try {
+    public static Commit getHeadCommit(Path vcsDirectory) throws Exception {
             String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
             List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
             if (lastCommit.size() == 0) {
@@ -165,10 +154,6 @@ public class Commit extends VCSUtils {
             } else {
                 return findCommit(lastCommit.get(0), vcsDirectory);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     /**
@@ -182,7 +167,7 @@ public class Commit extends VCSUtils {
      * @return returns the newly created commit object
      */
     public static Commit writeCommit(String user,
-                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[][] opened) {
+                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[][] opened) throws Exception {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");
@@ -217,7 +202,7 @@ public class Commit extends VCSUtils {
      * @param vcsDirectory: path to the .vcs directory
      * @return returns the newly created commit object
      */
-    public static Commit writeInitialCommit(Path vcsDirectory) {
+    public static Commit writeInitialCommit(Path vcsDirectory) throws Exception {
         String hash = hash("");
         createFile("", hash, vcsDirectory);
         return new InitialCommit(hash);

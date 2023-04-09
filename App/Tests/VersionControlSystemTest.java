@@ -67,7 +67,7 @@ class VersionControlSystemTest {
         }
     }
     @org.junit.jupiter.api.Test
-    void removeTest() {  // should print "No changes added to the commit\nNo reason to remove the file"
+    void removeTest() {
         VersionControlSystem vcs = cleanUp();
         try {
             FileWriter writer = new FileWriter(TESTDIR +"\\testText.txt");
@@ -75,7 +75,9 @@ class VersionControlSystemTest {
             writer.close();
             vcs.add(TESTDIR +"\\testText.txt");
             vcs.remove(TESTDIR +"\\testText.txt");
-            vcs.commit("Test", "User");
+            Exception exception = assertThrows(Exception.class,
+                    () -> vcs.commit("Test", "User"));
+            assertEquals(exception.getMessage(), "No changes added to commit");
             vcs.add(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
             writer = new FileWriter(TESTDIR +"\\testText.txt");
@@ -85,7 +87,9 @@ class VersionControlSystemTest {
             vcs.remove(TESTDIR +"\\testText.txt");
             vcs.commit("Test", "User");
             assertFalse(new File(TESTDIR +"\\testText.txt").exists());
-            vcs.remove(TESTDIR +"\\testText.txt");
+            Exception e = assertThrows(Exception.class,
+                    () -> vcs.remove(TESTDIR +"\\testText.txt"));
+            assertEquals(e.getMessage(), "No reason to remove file");
         } catch (Exception e) {
             e.printStackTrace();
             fail();
@@ -246,7 +250,7 @@ class VersionControlSystemTest {
         }
     }
     @org.junit.jupiter.api.Test
-    void checkoutTest4() {  // this should print "File does not exist in that commit"
+    void checkoutTest4() {
         VersionControlSystem vcs = cleanUp();
         try {
             Path path = Path.of(TESTDIR + "\\testText.txt");
@@ -254,7 +258,8 @@ class VersionControlSystemTest {
             writer.write("This is some nice text, yada yada");
             writer.close();
             vcs.add(path.toString());
-            vcs.checkout(path.toString(), false);
+            Exception e = assertThrows(Exception.class, () -> vcs.checkout(path.toString(), false));
+            assertEquals(e.getMessage(), "File does not exist in that commit");
         } catch (Exception e) {
             e.printStackTrace();
             fail();
@@ -262,7 +267,7 @@ class VersionControlSystemTest {
     }
 
     @org.junit.jupiter.api.Test
-    void checkoutTest5() {  // should print "There are untracked files in the way; delete it or add it first.\n testText1.txt"
+    void checkoutTest5() {
         VersionControlSystem vcs = cleanUp();
         try {
             Path path = Path.of(TESTDIR + "\\testText.txt");
@@ -297,7 +302,8 @@ class VersionControlSystemTest {
             writer = new FileWriter(otherPath.toFile());
             writer.write("This is THE burner file");
             writer.close();
-            vcs.checkout("Branch", true);
+            Exception e = assertThrows(Exception.class, () -> vcs.checkout("Branch", true));
+            assertEquals(e.getMessage(), "There are untracked files in the way; delete it or add it first.\ntestText1.txt\n");
             otherPath.toFile().delete();
             vcs.checkout("Branch", true);
             pathContents = Files.readAllLines(path).get(0);
@@ -364,7 +370,7 @@ class VersionControlSystemTest {
     }
 
     @org.junit.jupiter.api.Test
-    void resetTest() {  // should print "There are untracked files in the way; delete it or add it first.\n testText1.txt"
+    void resetTest() {
         VersionControlSystem vcs = cleanUp();
         try {
             Path path = Path.of(TESTDIR + "\\testText.txt");
@@ -394,7 +400,8 @@ class VersionControlSystemTest {
             writer.write("This is THE burner file");
             writer.close();
             String hash = vcs.getLastCommit().parentCommit().hash;
-            vcs.reset(hash);
+            Exception e = assertThrows(Exception.class, () -> vcs.reset(hash));
+            assertEquals(e.getMessage(), "There are untracked files in the way; delete it or add it first.\ntestText1.txt\n");
             otherPath.toFile().delete();
             vcs.reset(hash);
             String pathContents = Files.readAllLines(path).get(0);
@@ -411,17 +418,22 @@ class VersionControlSystemTest {
     }
 
     private static VersionControlSystem cleanUp() {
-        File[] files = new File(TESTDIR).listFiles();
-        assert files != null;
-        for (File file : files) {
-            if (file.isDirectory()) {
-                deleteDirectory(file);
-            } else {
-                file.delete();
+        try {
+            File[] files = new File(TESTDIR).listFiles();
+            assert files != null;
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
             }
+            VersionControlSystem vcs = VersionControlSystem.init(TESTDIR);
+            return vcs;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        VersionControlSystem vcs = VersionControlSystem.init(TESTDIR);
-        return vcs;
     }
     public static void deleteDirectory(File directory) {
         if (directory.exists()) {
