@@ -196,6 +196,8 @@ public class Commit extends VCSUtils {
             o.add(s);
         }
         sb.append("===\n");
+        
+        sb.append("===\n");
         sb.append(message);
         String hash = hash(sb.toString());
         createFile(sb.toString(), hash, vcsDirectory);
