@@ -14,6 +14,15 @@ public class Tree extends VCSUtils {
     }
 
     /**
+     * If the file is tracked in the commit
+     * @param name: name of file
+     * @return boolean if file is tracked or not
+     */
+    public boolean contains(String name) {
+        return this.map.containsKey(name);
+    }
+
+    /**
      * returns the Tree object under the hash
      * @param hash: hash of the desired tree
      * @param vcsDirectory: path to the .vcs directory

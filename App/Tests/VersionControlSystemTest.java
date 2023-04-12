@@ -107,7 +107,12 @@ class VersionControlSystemTest {
                 vcs.add(TESTDIR +"\\testText" + i +".txt");
                 vcs.commit(""+i, "User");
             }
+            vcs.branch("Branch");
+            vcs.checkout("Branch", true);
+            vcs.remove(TESTDIR +"\\testText0.txt");
+            vcs.commit("Branch", "User");
             System.out.println(vcs.log());
+            vcs.checkout("master", true);
             assertEquals(5, vcs.log().split("===").length-1);
         } catch (Exception e) {
             e.printStackTrace();
@@ -126,8 +131,13 @@ class VersionControlSystemTest {
                 vcs.add(TESTDIR +"\\testText" + i +".txt");
                 vcs.commit(""+i, "User");
             }
-            System.out.println(vcs.globalLog());
-            assertEquals(5, vcs.log().split("===").length-1);
+            vcs.branch("Branch");
+            vcs.checkout("Branch", true);
+            vcs.remove(TESTDIR +"\\testText0.txt");
+            vcs.commit("Branch", "User");
+            System.out.println(vcs.log());
+            vcs.checkout("master", true);
+            assertEquals(6, vcs.log().split("===").length-1);
         } catch (Exception e) {
             e.printStackTrace();
             fail();

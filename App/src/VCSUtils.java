@@ -55,18 +55,16 @@ public class VCSUtils {
      * @return boolean whether the creation was successful or not
      */
     public static boolean createFile(File path, String hash, Path vcsDirectory) throws Exception {
-        if (hashExists(hash, vcsDirectory)) {
-            return true;
-        } else {
+        if (!hashExists(hash, vcsDirectory)) {
             Path source = path.toPath();
             Path target = findHash(hash, vcsDirectory);
             File bin = target.getParent().toFile();
             if (!bin.exists() && !bin.mkdir()) {
                 return false;
             }
-                Files.copy(source, target);
-                return true;
+            Files.copy(source, target);
         }
+        return true;
     }
     public static boolean createFile(String contents, String hash, Path vcsDirectory) throws Exception {
         if (!hashExists(hash, vcsDirectory)) {

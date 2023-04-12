@@ -96,36 +96,41 @@ public class Commit extends VCSUtils {
      * @return commit object
      */
     public static Commit findCommit(String hash, Path vcsDirectory) throws Exception {
-            List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
-            if (commit.size() == 0) {
-                return new InitialCommit(hash);
-            }
-            int i = 6;
-            Set<String> opened = new HashSet<>();
-            while (!"===".equals(commit.get(i))) {
-                opened.add(commit.get(i));
-                i++;
-            }
+        if (!findHash(hash, vcsDirectory).toFile().exists()) {
+            throw new FailCaseException(String.format("Commit with hash %s does not exist", hash));
+        }
+        List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
+        if (commit.size() == 0) {
+            return new InitialCommit(hash);
+        }
+        int i = 6;
+        Set<String> opened = new HashSet<>();
+        while (!"===".equals(commit.get(i))) {
+            opened.add(commit.get(i));
             i++;
-            Set<String> closed = new HashSet<>();
-            while (!"===".equals(commit.get(i))) {
-                closed.add(commit.get(i));
-                i++;
-            }
+        }
+        i++;
+        Set<String> closed = new HashSet<>();
+        while (!"===".equals(commit.get(i))) {
+            closed.add(commit.get(i));
             i++;
-            StringBuilder sb = new StringBuilder();
-            while (i < commit.size()) {
-                sb.append(commit.get(i)).append("\n");
-                i++;
-            }
-            return new Commit(hash, commit.get(0), commit.get(1),
-                    commit.get(2), commit.get(3), commit.get(4), sb.toString(), vcsDirectory, opened, closed);
+        }
+        i++;
+        StringBuilder sb = new StringBuilder();
+        while (i < commit.size()) {
+            sb.append(commit.get(i)).append("\n");
+            i++;
+        }
+        return new Commit(hash, commit.get(0), commit.get(1),
+                commit.get(2), commit.get(3), commit.get(4), sb.toString(), vcsDirectory, opened, closed);
     }
     public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) throws Exception {
         if (cache.containsKey(hash)) {
             return cache.get(hash);
         }
-        return findCommit(hash, vcsDirectory);
+        Commit output = findCommit(hash, vcsDirectory);
+        cache.put(output.hash, output);
+        return output;
     }
 
     /**
@@ -137,11 +142,11 @@ public class Commit extends VCSUtils {
     public static Commit getHeadCommit(Path vcsDirectory, String branch) throws Exception {
             Path p = vcsDirectory.resolve("Branches").resolve(branch);
             if (!Files.exists(p)) {
-                return null;
+                throw new Exception(String.format("Branch \"%s\" does not exist", branch));
             }
             List<String> lastCommit = Files.readAllLines(p);
             if (lastCommit.size() == 0) {
-                return null;
+                throw new Exception(String.format("Branch \"%s\" not formatted correctly", branch));
             } else {
                 return findCommit(lastCommit.get(0), vcsDirectory);
             }
@@ -150,7 +155,7 @@ public class Commit extends VCSUtils {
             String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
             List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
             if (lastCommit.size() == 0) {
-                return null;
+                throw new Exception(String.format("Branch \"%s\" not formatted correctly", headBranch));
             } else {
                 return findCommit(lastCommit.get(0), vcsDirectory);
             }
@@ -167,7 +172,7 @@ public class Commit extends VCSUtils {
      * @return returns the newly created commit object
      */
     public static Commit writeCommit(String user,
-                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[][] opened) throws Exception {
+                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[] opened) throws Exception {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");
@@ -186,9 +191,9 @@ public class Commit extends VCSUtils {
         }
         Set<String> o = new HashSet<>();
         sb.append("===\n");
-        for (String[] s : opened) {
-            sb.append(s[0]).append("\n");
-            o.add(s[0]);
+        for (String s : opened) {
+            sb.append(s).append("\n");
+            o.add(s);
         }
         sb.append("===\n");
         sb.append(message);
