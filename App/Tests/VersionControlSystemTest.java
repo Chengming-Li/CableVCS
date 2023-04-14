@@ -83,7 +83,10 @@ class VersionControlSystemTest {
             writer.write("This is some nice text, yada");
             writer.close();
             vcs.add(TESTDIR +"\\testText.txt");
-            vcs.commit("Closed", "user", new String[] {"Close this task"}, new String[] {"New Task"});
+            VersionControlSystem finalVcs = vcs;
+            Exception e = assertThrows(Exception.class, () -> finalVcs.commit("Closed", "user", null, new String[] {"Close this task"}));
+            assertEquals(e.getMessage(), "Task \"Close this task\" already exists");
+            finalVcs.commit("Closed", "user", new String[] {"Close this task"}, new String[] {"New Task"});
             assertTrue((!new File(VCSDIR + "\\Tasks\\Close this task").exists() && new File(VCSDIR + "\\Tasks\\New Task").exists()));
         } catch (Exception e) {
             e.printStackTrace();
@@ -299,7 +302,6 @@ class VersionControlSystemTest {
             fail();
         }
     }
-
     @org.junit.jupiter.api.Test
     void checkoutTest5() {
         VersionControlSystem vcs = cleanUp();
@@ -347,7 +349,44 @@ class VersionControlSystemTest {
             fail();
         }
     }
-
+    @org.junit.jupiter.api.Test
+    void checkoutTest6() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            Path path = Path.of(TESTDIR + "\\testText.txt");
+            FileWriter writer = new FileWriter(path.toFile());
+            writer.write("This is some nice text, yada yada");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("First Commit", "User", null, new String[]{"One", "Two"});
+            vcs.branch("Branch");
+            writer = new FileWriter(path.toFile());
+            writer.write("This is still the master branch");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.commit("Second Commit", "User", new String[]{"One"}, new String[] {"Four"});
+            assertTrue(!new File(VCSDIR+"\\Tasks\\One").exists() && new File(VCSDIR + "\\Tasks\\Two").exists() && new File(VCSDIR + "\\Tasks\\Four").exists());
+            vcs.checkout("Branch", true);
+            assertTrue(new File(VCSDIR+"\\Tasks\\One").exists() && new File(VCSDIR + "\\Tasks\\Two").exists());
+            writer = new FileWriter(path.toFile());
+            writer.write("This is the new branch");
+            writer.close();
+            Path otherPath = Path.of(TESTDIR + "\\testText1.txt");
+            writer = new FileWriter(otherPath.toFile());
+            writer.write("This is not the burner file");
+            writer.close();
+            vcs.add(path.toString());
+            vcs.add(otherPath.toString());
+            vcs.commit("Third Commit", "User", new String[]{"One", "Two"}, null);
+            assertTrue(!new File(VCSDIR+"\\Tasks\\One").exists() && !new File(VCSDIR + "\\Tasks\\Two").exists());
+            vcs.checkout("master", true);
+            System.out.println(vcs.globalLog());
+            assertTrue(!new File(VCSDIR+"\\Tasks\\One").exists() && new File(VCSDIR + "\\Tasks\\Two").exists() && new File(VCSDIR + "\\Tasks\\Four").exists());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
     @org.junit.jupiter.api.Test
     void branchTest() {
         VersionControlSystem vcs = cleanUp();

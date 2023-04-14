@@ -83,6 +83,18 @@ public class Commit extends VCSUtils {
         if (global) {
             sb.append(String.format("Branch: %s\n", this.branch));
         }
+        if (this.opened.size() > 0) {
+            sb.append("Opened Tasks:\n");
+            for (String s : this.opened) {
+                sb.append(s).append("\n");
+            }
+        }
+        if (this.closed.size() > 0) {
+            sb.append("Closed Tasks:\n");
+            for (String s : this.closed) {
+                sb.append(s).append("\n");
+            }
+        }
         sb.append(this.message).append("\n");
         return sb.toString();
     }
@@ -124,9 +136,10 @@ public class Commit extends VCSUtils {
         while ((line = reader.readLine()) != null && !line.equals("===")) {
             sb.append(line).append("\n");
         }
+        sb.delete(sb.length()-2, sb.length());
         reader.close();
         return new Commit(hash, args.get(0), args.get(1),
-                args.get(2), args.get(3), args.get(4), sb.toString(), vcsDirectory, opened, closed, tasks);
+                args.get(2), args.get(3), args.get(4), sb.toString(), vcsDirectory, closed, opened, tasks);
     }
     public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) throws Exception {
         if (cache.containsKey(hash)) {
@@ -143,7 +156,7 @@ public class Commit extends VCSUtils {
      * @param branch: the branch the returned head commit belongs to. If no branch is entered, use current branch
      * @return commit object
      */
-    public static Commit getHeadCommit(Path vcsDirectory, String branch) throws Exception {
+    public static Commit getHeadCommit(Path vcsDirectory, String branch, Map<String, Commit> cache) throws Exception {
         Path p = vcsDirectory.resolve("Branches").resolve(branch);
         if (!Files.exists(p)) {
             throw new Exception(String.format("Branch \"%s\" does not exist", branch));
@@ -152,7 +165,7 @@ public class Commit extends VCSUtils {
         if (lastCommit.size() == 0) {
             throw new Exception(String.format("Branch \"%s\" not formatted correctly", branch));
         } else {
-            return findCommit(lastCommit.get(0), vcsDirectory);
+            return findCommit(lastCommit.get(0), vcsDirectory, cache);
         }
     }
     public static Commit getHeadCommit(Path vcsDirectory) throws Exception {

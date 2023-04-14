@@ -34,7 +34,7 @@ public class VersionControlSystem extends VCSUtils {
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
-        this.tasks = lastCommit.tasks; // this.vcsDirectory.resolve("tasks").toFile();
+        this.tasks = new HashSet<>(lastCommit.tasks);
         readIndex();
         branchSet = getBranches();
     }
@@ -50,7 +50,7 @@ public class VersionControlSystem extends VCSUtils {
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
-        this.tasks = lastCommit.tasks;
+        this.tasks = new HashSet<>(lastCommit.tasks);
         readIndex();
         branchSet = getBranches();
     }
@@ -140,7 +140,7 @@ public class VersionControlSystem extends VCSUtils {
      * @param user: string, the author of the commit
      */
     public void commit(String message, String user) throws Exception {
-        commit(message, user, new String[0], new String[0]);
+        commit(message, user, null, null);
     }
 
     /**
@@ -168,10 +168,20 @@ public class VersionControlSystem extends VCSUtils {
         } else if (message.length() == 0) {
             throw new FailCaseException("Please enter a commit message");
         }
+        if (openTasks == null) {
+            openTasks = new String[0];
+        }
+        if (closeTasks == null) {
+            closeTasks = new String[0];
+        }
         for (String s : openTasks) {
             if (this.tasks.contains(s)) {
-                throw new FailCaseException(String.format("Task %s already exists", s));
+                throw new FailCaseException(String.format("Task \"%s\" already exists", s));
             }
+        }
+        this.tasks.addAll(Arrays.asList(openTasks));
+        for (String s : closeTasks) {
+            this.tasks.remove(s);
         }
         this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks, this.tasks);
         commitCache.put(lastCommit.hash, lastCommit);
@@ -339,7 +349,7 @@ public class VersionControlSystem extends VCSUtils {
             Files.copy(findHash(hash, vcsDirectory), p, StandardCopyOption.REPLACE_EXISTING);
         } else {
             // check to see if branch exists
-            Commit c = Commit.getHeadCommit(vcsDirectory, input);
+            Commit c = Commit.getHeadCommit(vcsDirectory, input, commitCache);
             performCheckout(c);
             this.branch = input;
             FileWriter writer = new FileWriter(this.head);
@@ -602,7 +612,7 @@ public class VersionControlSystem extends VCSUtils {
 
     private void resetTasks(Commit c) throws Exception {
         Set<String> tasks = new HashSet<>(c.tasks);
-        try (Stream<Path> walk = Files.walk(vcsDirectory.resolve("Tasks"))) {
+        try (Stream<Path> walk = Files.walk(vcsDirectory.resolve("Tasks")).filter(path -> !Files.isDirectory(path))) {
             for (Path p : walk.toList()) {
                 if (!tasks.contains(p.getFileName().toString())) {
                     p.toFile().delete();
@@ -613,6 +623,7 @@ public class VersionControlSystem extends VCSUtils {
             for (String t : tasks) {
                 vcsDirectory.resolve("Tasks").resolve(t).toFile().createNewFile();
             }
+            this.tasks = new HashSet<>(c.tasks);
         }
     }
 }
