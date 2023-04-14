@@ -67,6 +67,30 @@ class VersionControlSystemTest {
         }
     }
     @org.junit.jupiter.api.Test
+    void commitTest2() {
+        VersionControlSystem vcs = cleanUp();
+        try {
+            FileWriter writer;
+            for (int i = 0; i < 5; i++) {
+                writer = new FileWriter(TESTDIR +"\\testText" + i +".txt");
+                writer.write("This is some nice text, yada" + i);
+                writer.close();
+                vcs.add(TESTDIR +"\\testText" + i +".txt");
+            }
+            vcs.commit("commit", "user", new String[0], new String[] {"Close this task"});
+            vcs = new VersionControlSystem(TESTDIR);
+            writer = new FileWriter(TESTDIR +"\\testText.txt");
+            writer.write("This is some nice text, yada");
+            writer.close();
+            vcs.add(TESTDIR +"\\testText.txt");
+            vcs.commit("Closed", "user", new String[] {"Close this task"}, new String[] {"New Task"});
+            assertTrue((!new File(VCSDIR + "\\Tasks\\Close this task").exists() && new File(VCSDIR + "\\Tasks\\New Task").exists()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @org.junit.jupiter.api.Test
     void removeTest() {
         VersionControlSystem vcs = cleanUp();
         try {
@@ -135,9 +159,9 @@ class VersionControlSystemTest {
             vcs.checkout("Branch", true);
             vcs.remove(TESTDIR +"\\testText0.txt");
             vcs.commit("Branch", "User");
-            System.out.println(vcs.log());
+            System.out.println(vcs.globalLog());
             vcs.checkout("master", true);
-            assertEquals(6, vcs.log().split("===").length-1);
+            assertEquals(6, vcs.globalLog().split("===").length-1);
         } catch (Exception e) {
             e.printStackTrace();
             fail();

@@ -1,10 +1,11 @@
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class InitialCommit extends Commit{
     public InitialCommit(String hash) {
-        super(hash, "", "", "", "", "master", "Initial Commit", null, null, null);
+        super(hash, "", "", "", "", "master", "Initial Commit", null, null, null, new HashSet<>());
     }
 
     @Override

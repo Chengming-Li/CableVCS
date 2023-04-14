@@ -1,3 +1,6 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -16,9 +19,11 @@ public class Commit extends VCSUtils {
     private final Path vcsDirectory;
     public final Set<String> closed;
     public final Set<String> opened;
+    public Set<String> tasks;
 
     public Commit(String hash, String tree, String lastCommit, String time,
-                  String author, String branch, String message, Path vcsDirectory, Set<String> closed, Set<String> opened) {
+                  String author, String branch, String message, Path vcsDirectory, Set<String> closed,
+                  Set<String> opened, Set<String> tasks) {
         this.hash = hash;
         this.tree = tree;
         this.lastHash = lastCommit;
@@ -29,20 +34,13 @@ public class Commit extends VCSUtils {
         this.vcsDirectory = vcsDirectory;
         this.closed = closed;
         this.opened = opened;
+        this.tasks = tasks;
     }
     public Commit(String hash, String tree, String lastCommit, String time,
-                  String author, String branch, String message, Path vcsDirectory, Tree treeObject, Set<String> closed, Set<String> opened) {
-        this.hash = hash;
-        this.tree = tree;
-        this.lastHash = lastCommit;
-        this.time = time;
-        this.author = author;
-        this.branch = branch;
-        this.message = message;
-        this.vcsDirectory = vcsDirectory;
+                  String author, String branch, String message, Path vcsDirectory, Tree treeObject,
+                  Set<String> closed, Set<String> opened, Set<String> tasks) {
+        this(hash, tree, lastCommit, time, author, branch, message, vcsDirectory, closed, opened, tasks);
         this.treeObject = treeObject;
-        this.closed = closed;
-        this.opened = opened;
     }
 
     /**
@@ -96,33 +94,39 @@ public class Commit extends VCSUtils {
      * @return commit object
      */
     public static Commit findCommit(String hash, Path vcsDirectory) throws Exception {
-        if (!findHash(hash, vcsDirectory).toFile().exists()) {
+        File file = findHash(hash, vcsDirectory).toFile();
+        if (!file.exists()) {
             throw new FailCaseException(String.format("Commit with hash %s does not exist", hash));
         }
-        List<String> commit = Files.readAllLines(findHash(hash, vcsDirectory));
-        if (commit.size() == 0) {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        if (!reader.ready()) {
             return new InitialCommit(hash);
         }
-        int i = 6;
+        String line;
+        int i = 0;
+        List<String> args = new ArrayList<>();
+        while ((line = reader.readLine()) != null && !line.equals("===")) {
+            args.add(line);
+        }
         Set<String> opened = new HashSet<>();
-        while (!"===".equals(commit.get(i))) {
-            opened.add(commit.get(i));
-            i++;
+        while ((line = reader.readLine()) != null && !line.equals("===")) {
+            opened.add(line);
         }
-        i++;
         Set<String> closed = new HashSet<>();
-        while (!"===".equals(commit.get(i))) {
-            closed.add(commit.get(i));
-            i++;
+        while ((line = reader.readLine()) != null && !line.equals("===")) {
+            closed.add(line);
         }
-        i++;
+        Set<String> tasks = new HashSet<>();
+        while ((line = reader.readLine()) != null && !line.equals("===")) {
+            tasks.add(line);
+        }
         StringBuilder sb = new StringBuilder();
-        while (i < commit.size()) {
-            sb.append(commit.get(i)).append("\n");
-            i++;
+        while ((line = reader.readLine()) != null && !line.equals("===")) {
+            sb.append(line).append("\n");
         }
-        return new Commit(hash, commit.get(0), commit.get(1),
-                commit.get(2), commit.get(3), commit.get(4), sb.toString(), vcsDirectory, opened, closed);
+        reader.close();
+        return new Commit(hash, args.get(0), args.get(1),
+                args.get(2), args.get(3), args.get(4), sb.toString(), vcsDirectory, opened, closed, tasks);
     }
     public static Commit findCommit(String hash, Path vcsDirectory, Map<String, Commit> cache) throws Exception {
         if (cache.containsKey(hash)) {
@@ -140,25 +144,25 @@ public class Commit extends VCSUtils {
      * @return commit object
      */
     public static Commit getHeadCommit(Path vcsDirectory, String branch) throws Exception {
-            Path p = vcsDirectory.resolve("Branches").resolve(branch);
-            if (!Files.exists(p)) {
-                throw new Exception(String.format("Branch \"%s\" does not exist", branch));
-            }
-            List<String> lastCommit = Files.readAllLines(p);
-            if (lastCommit.size() == 0) {
-                throw new Exception(String.format("Branch \"%s\" not formatted correctly", branch));
-            } else {
-                return findCommit(lastCommit.get(0), vcsDirectory);
-            }
+        Path p = vcsDirectory.resolve("Branches").resolve(branch);
+        if (!Files.exists(p)) {
+            throw new Exception(String.format("Branch \"%s\" does not exist", branch));
+        }
+        List<String> lastCommit = Files.readAllLines(p);
+        if (lastCommit.size() == 0) {
+            throw new Exception(String.format("Branch \"%s\" not formatted correctly", branch));
+        } else {
+            return findCommit(lastCommit.get(0), vcsDirectory);
+        }
     }
     public static Commit getHeadCommit(Path vcsDirectory) throws Exception {
-            String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
-            List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
-            if (lastCommit.size() == 0) {
-                throw new Exception(String.format("Branch \"%s\" not formatted correctly", headBranch));
-            } else {
-                return findCommit(lastCommit.get(0), vcsDirectory);
-            }
+        String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
+        List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
+        if (lastCommit.size() == 0) {
+            throw new Exception(String.format("Branch \"%s\" not formatted correctly", headBranch));
+        } else {
+            return findCommit(lastCommit.get(0), vcsDirectory);
+        }
     }
 
     /**
@@ -171,8 +175,9 @@ public class Commit extends VCSUtils {
      * @param branch: the current branch
      * @return returns the newly created commit object
      */
-    public static Commit writeCommit(String user,
-                                     String message, Path vcsDirectory, Commit current, Map<String, String> index, String branch, String[] closed, String[] opened) throws Exception {
+    public static Commit writeCommit(String user, String message, Path vcsDirectory, Commit current,
+                                     Map<String, String> index, String branch, String[] closed,
+                                     String[] opened, Set<String> tasks) throws Exception {
         StringBuilder sb = new StringBuilder();
         Tree tree = Tree.makeTree(vcsDirectory, index, current);
         sb.append(tree.hash).append("\n");
@@ -186,22 +191,34 @@ public class Commit extends VCSUtils {
             lastHash = current.hash;
         }
         sb.append(time).append("\n").append(user).append("\n").append(branch).append("\n===\n");
-        for (String s : closed) {
-            sb.append(s).append("\n");
-        }
-        Set<String> o = new HashSet<>();
-        sb.append("===\n");
+        tasks = new HashSet<>(tasks);
         for (String s : opened) {
             sb.append(s).append("\n");
-            o.add(s);
+            tasks.add(s);
+        }
+        File p;
+        sb.append("===\n");
+        for (String s : closed) {
+            sb.append(s).append("\n");
+            p = new File(vcsDirectory.resolve("Tasks").resolve(s).toString());
+            if (p.exists()) {
+                p.delete();
+            }
+            tasks.remove(s);
         }
         sb.append("===\n");
-        
-        sb.append("===\n");
-        sb.append(message);
+        for (String s : tasks) {
+            sb.append(s).append("\n");
+            p = new File(vcsDirectory.resolve("Tasks").resolve(s).toString());
+            if (!p.exists()) {
+                p.createNewFile();
+            }
+        }
+        sb.append("===\n").append(message).append("\n===");
         String hash = hash(sb.toString());
         createFile(sb.toString(), hash, vcsDirectory);
-        return new Commit(hash, tree.hash, lastHash, time, user, branch, message, vcsDirectory, tree, new HashSet<>(Arrays.asList(closed)), o);
+        return new Commit(hash, tree.hash, lastHash, time, user, branch, message,
+                vcsDirectory, tree, new HashSet<>(Arrays.asList(closed)), new HashSet<>(Arrays.asList(opened)), tasks);
     }
 
     /**

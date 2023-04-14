@@ -17,12 +17,12 @@ public class VersionControlSystem extends VCSUtils {
     private final File index;  // index/staging area
     private Map<String, String> indexMap;  // map of index/staging area, [name] : [hash] [status]
     // just used for init()
-    private static final String[] SUBDIRECTORIES = {"Objects", "Branches"};
+    private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks"};
     private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
     private final Map<String, Commit> commitCache;  // cache of commits already visited, [hash] : [commit]
     private Set<Path> branchSet;  // Set containing path of all branch pointer
-    private File tasks;
+    private Set<String> tasks;
     public VersionControlSystem(String currentDirectory) throws Exception {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
@@ -34,7 +34,7 @@ public class VersionControlSystem extends VCSUtils {
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
-        this.tasks = this.vcsDirectory.resolve("tasks").toFile();
+        this.tasks = lastCommit.tasks; // this.vcsDirectory.resolve("tasks").toFile();
         readIndex();
         branchSet = getBranches();
     }
@@ -50,7 +50,7 @@ public class VersionControlSystem extends VCSUtils {
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
-        this.tasks = this.vcsDirectory.resolve("tasks").toFile();
+        this.tasks = lastCommit.tasks;
         readIndex();
         branchSet = getBranches();
     }
@@ -168,7 +168,12 @@ public class VersionControlSystem extends VCSUtils {
         } else if (message.length() == 0) {
             throw new FailCaseException("Please enter a commit message");
         }
-        this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks);
+        for (String s : openTasks) {
+            if (this.tasks.contains(s)) {
+                throw new FailCaseException(String.format("Task %s already exists", s));
+            }
+        }
+        this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks, this.tasks);
         commitCache.put(lastCommit.hash, lastCommit);
         FileWriter fw = new FileWriter(getHeadPath(), false);
         fw.write(lastCommit.hash);
@@ -340,7 +345,6 @@ public class VersionControlSystem extends VCSUtils {
             FileWriter writer = new FileWriter(this.head);
             writer.write(this.branches.resolve(input).toString());
             writer.close();
-            this.lastCommit = c;
         }
     }
 
@@ -398,6 +402,7 @@ public class VersionControlSystem extends VCSUtils {
      * Checks out all the files tracked by the given commit.
      * Removes tracked files that are not present in that commit.
      * Also moves the current branch's head to that commit node.
+     * Reverts the tasks to the tasks saved in commit
      * @param commitID: hash of commit to be reset to. If no commitID is entered, it'll use the last commit
      */
     public void reset(String commitID) throws Exception {
@@ -460,6 +465,8 @@ public class VersionControlSystem extends VCSUtils {
             Files.copy(findHash(headMap.get(name), vcsDirectory),
                     this.currentDirectory.resolve(name), StandardCopyOption.REPLACE_EXISTING);
         }
+        this.lastCommit = c;
+        resetTasks(c);
     }
 
     /**
@@ -591,5 +598,21 @@ public class VersionControlSystem extends VCSUtils {
         setArray[3] = untracked;
         setArray[4] = removed;
         return setArray;
+    }
+
+    private void resetTasks(Commit c) throws Exception {
+        Set<String> tasks = new HashSet<>(c.tasks);
+        try (Stream<Path> walk = Files.walk(vcsDirectory.resolve("Tasks"))) {
+            for (Path p : walk.toList()) {
+                if (!tasks.contains(p.getFileName().toString())) {
+                    p.toFile().delete();
+                } else {
+                    tasks.remove(p.getFileName().toString());
+                }
+            }
+            for (String t : tasks) {
+                vcsDirectory.resolve("Tasks").resolve(t).toFile().createNewFile();
+            }
+        }
     }
 }
