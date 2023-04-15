@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 public class Main {
     public static void main(String[] args) {
         try {
+            System.out.println("Jar created");
             VersionControlSystem vcs = VersionControlSystem.init("C:\\Users\\malic\\Downloads\\Test");
             // Read input from stdin
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
