@@ -1,3 +1,6 @@
+import versioncontrolsystem.VCSUtils;
+import versioncontrolsystem.VersionControlSystem;
+
 import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +15,7 @@ class VersionControlSystemTest {
     @org.junit.jupiter.api.Test
     void init() {
         VersionControlSystem vcs = cleanUp();
-        assertTrue(Files.exists(Paths.get(VCSDIR)));
+        assertTrue(new File(VCSDIR).exists());
     }
     @org.junit.jupiter.api.Test
     void addTest() {
@@ -493,7 +496,9 @@ class VersionControlSystemTest {
     private static VersionControlSystem cleanUp() {
         try {
             File[] files = new File(TESTDIR).listFiles();
-            assert files != null;
+            if (files == null) {
+                return null;
+            }
             for (File file : files) {
                 if (file.isDirectory()) {
                     deleteDirectory(file);

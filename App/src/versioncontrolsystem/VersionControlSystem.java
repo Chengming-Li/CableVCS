@@ -1,3 +1,5 @@
+package versioncontrolsystem;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -228,6 +230,9 @@ public class VersionControlSystem extends VCSUtils {
      * @return a string of all the commits
      */
     public String log() throws Exception {
+        if (this.lastCommit instanceof InitialCommit) {
+            return "There have been no commits";
+        }
         StringBuilder sb = new StringBuilder();
         Commit c = lastCommit;
         while (c != null) {

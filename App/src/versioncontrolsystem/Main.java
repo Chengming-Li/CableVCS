@@ -1,9 +1,11 @@
+package versioncontrolsystem;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 public class Main {
     public static void main(String[] args) {
         try {
-            VersionControlSystem vcs = VersionControlSystem.init("C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\Test");
+            VersionControlSystem vcs = VersionControlSystem.init("C:\\Users\\malic\\Downloads\\Test");
             // Read input from stdin
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             String input;

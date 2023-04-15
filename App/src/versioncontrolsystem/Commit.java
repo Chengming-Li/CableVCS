@@ -1,3 +1,5 @@
+package versioncontrolsystem;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -45,7 +47,7 @@ public class Commit extends VCSUtils {
 
     /**
      * Returns a commit object representing the parent commit of this commit
-     * @param cache: a hash : Commit map, passed in so already created Commit objects don't need to be re-instantiated
+     * @param cache: a hash : versioncontrolsystem.Commit map, passed in so already created versioncontrolsystem.Commit objects don't need to be re-instantiated
      * @return the parent commit object
      */
     public Commit parentCommit(Map<String, Commit> cache) throws Exception {
@@ -73,9 +75,9 @@ public class Commit extends VCSUtils {
     }
 
     /**
-     * returns a string representation of the Commit object
+     * returns a string representation of the versioncontrolsystem.Commit object
      * @param global: boolean, if the branch should be included or not
-     * @return formatted string of the Commit
+     * @return formatted string of the versioncontrolsystem.Commit
      */
     public String toString(boolean global) {
         StringBuilder sb = new StringBuilder();
@@ -108,7 +110,7 @@ public class Commit extends VCSUtils {
     public static Commit findCommit(String hash, Path vcsDirectory) throws Exception {
         File file = findHash(hash, vcsDirectory).toFile();
         if (!file.exists()) {
-            throw new FailCaseException(String.format("Commit with hash %s does not exist", hash));
+            throw new FailCaseException(String.format("versioncontrolsystem.Commit with hash %s does not exist", hash));
         }
         BufferedReader reader = new BufferedReader(new FileReader(file));
         if (!reader.ready()) {

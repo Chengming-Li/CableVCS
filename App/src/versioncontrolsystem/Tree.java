@@ -1,3 +1,5 @@
+package versioncontrolsystem;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
@@ -23,7 +25,7 @@ public class Tree extends VCSUtils {
     }
 
     /**
-     * returns the Tree object under the hash
+     * returns the versioncontrolsystem.Tree object under the hash
      * @param hash: hash of the desired tree
      * @param vcsDirectory: path to the .vcs directory
      * @return tree object
