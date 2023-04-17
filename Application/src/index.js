@@ -9,8 +9,8 @@ if (require('electron-squirrel-startup')) {
     app.quit()
 }
 
-function testFunction(event, input) {
-    vcs.stdin.write('Hello from Electron!\n');
+function callVCSFunction(event, input) {
+    vcs.stdin.write(input + "\n");
 }
 
 const createWindow = () => {
@@ -25,16 +25,18 @@ const createWindow = () => {
     })
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
 
-    ipcMain.on('Test', testFunction)
-    // Handle data/events from Java process
+    // listen to messages in the Messages channel
+    ipcMain.on("Messages", callVCSFunction)
+
     vcs.stdout.on('data', (data) => {
-        // Handle data received from Java process
-        mainWindow.webContents.send('Test', data.toString());
+        // Handle data received from Java process by sending a message with the info into the Messages channel to render.js
+        mainWindow.webContents.send('Messages', data.toString());
     }
     );
     vcs.stderr.on('data', (data) => {
         // Handle error data received from Java process
-        console.error(`Error from Java: ${data.toString()}`);
+        console.log(data.toString());
+        mainWindow.webContents.send('Error', data.toString());
     });
     vcs.on('close', (code) => {
         // Handle Java process exit
