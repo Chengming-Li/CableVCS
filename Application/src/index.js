@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
+const { spawn } = require('child_process');
 const path = require('path')
 var mainWindow = null
+const vcs = spawn('java', ['-jar', "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\App\\out\\artifacts\\App_jar\\App.jar"]);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -8,8 +10,7 @@ if (require('electron-squirrel-startup')) {
 }
 
 function testFunction(event, input) {
-    console.log(input)
-    return "HI THERE"
+    vcs.stdin.write('Hello from Electron!\n');
 }
 
 const createWindow = () => {
@@ -24,7 +25,21 @@ const createWindow = () => {
     })
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
 
-    ipcMain.handle('Test', testFunction)
+    ipcMain.on('Test', testFunction)
+    // Handle data/events from Java process
+    vcs.stdout.on('data', (data) => {
+        // Handle data received from Java process
+        mainWindow.webContents.send('Test', data.toString());
+    }
+    );
+    vcs.stderr.on('data', (data) => {
+        // Handle error data received from Java process
+        console.error(`Error from Java: ${data.toString()}`);
+    });
+    vcs.on('close', (code) => {
+        // Handle Java process exit
+        console.log(`Java process exited with code ${code}`);
+    });
 
     // and load the index.html of the app.
     mainWindow.loadFile(path.join(__dirname, 'index.html'))

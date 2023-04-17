@@ -7,5 +7,6 @@ const { contextBridge, ipcRenderer } = require('electron')
 // also creates onUpdateCounter, which opens a listening channel "update-counter"
 // Didn't expose the entire ipcRenderer.send() method for security reasons, limiting what messages we can send
 contextBridge.exposeInMainWorld('electronAPI', {
-    testDialogue: (arg) => ipcRenderer.invoke("Test", arg)
+    testDialogue: (arg) => ipcRenderer.send("Test", arg),
+    onGetMessage: (callback) => ipcRenderer.on('Test', callback)
 })
