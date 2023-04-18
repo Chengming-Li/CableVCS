@@ -11,5 +11,5 @@ window.electronAPI.onGetError((event, value) => {
 
 // adds a listener to button that'll call the code inside
 buttonOne.addEventListener('click', () => {
-    window.electronAPI.init(window.electronAPI.generateConcatenation(["C:\\Users\\malic\\Downloads\\Test"]))
+    window.electronAPI.init("C:\\Users\\malic\\Downloads\\Test")
 })
