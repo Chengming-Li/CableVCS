@@ -563,7 +563,7 @@ public class VersionControlSystem extends VCSUtils {
      *  [4]: removed files
      * @return an array of sets
      */
-    private Set<String>[] statusHelper() throws Exception {
+    public Set<String>[] statusHelper() throws Exception {
         Set<String> branches = new HashSet<>();
         for (Path path : getBranches()) {
             branches.add(path.getFileName().toString());

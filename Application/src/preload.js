@@ -13,6 +13,18 @@ function generateConcatenation(strings) {
     return output
 }
 
+function decodeConcatenation(strings) {
+    let list = []
+    let i = 0;
+    let num = 0;
+    while (i < strings.length) {
+        num = strings.charCodeAt(i);
+        list.push(strings.substring(i + 1, i + num + 1));
+        i += num + 1;
+    }
+    return list;
+}
+
 // gives render.js access to these two methods
 contextBridge.exposeInMainWorld('electronAPI', {
     // VCS functions, take in a string or an array of strings as args
@@ -31,5 +43,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // starts listening for messages
     onGetMessage: (callback) => ipcRenderer.on("Messages", callback), 
     onGetError: (callback) => ipcRenderer.on("Error", callback),
+    updateBranch: (callback) => ipcRenderer.on("Branches", callback),
+    updateStaged: (callback) => ipcRenderer.on("Staged", callback),
+    updateModified: (callback) => ipcRenderer.on("Modified", callback),
+    updateUntracked: (callback) => ipcRenderer.on("Untracked", callback),
+    updateRemoved: (callback) => ipcRenderer.on("Removed", callback),
     generateConcatenation: (strings) => generateConcatenation(strings),
+    decodeConcatenation: (strings) => decodeConcatenation(strings),
 })

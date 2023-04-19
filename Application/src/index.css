@@ -5,3 +5,18 @@ body {
   max-width: 38rem;
   padding: 2rem;
 }
+.leftbar {
+    width: 200px;
+    height: 100%;
+    background-color: #333;
+    color: #fff;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding-left: 10px;
+    font-size: 9px;
+}
+.midBar {
+    margin-left: 200px;
+    padding: 20px;
+}
