@@ -22,7 +22,7 @@ public class VersionControlSystem extends VCSUtils {
     private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks"};
     private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
-    private final Map<String, Commit> commitCache;  // cache of commits already visited, [hash] : [commit]
+    private Map<String, Commit> commitCache;  // all commits
     private Set<Path> branchSet;  // Set containing path of all branch pointer
     private Set<String> tasks;
     public VersionControlSystem(String currentDirectory) throws Exception {
@@ -32,9 +32,8 @@ public class VersionControlSystem extends VCSUtils {
         this.index = this.vcsDirectory.resolve("Index").toFile();
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = this.vcsDirectory.resolve("AllCommits").toFile();
-        this.commitCache = new HashMap<>();
+        getAllCommits();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
-        this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
         this.tasks = new HashSet<>(lastCommit.tasks);
         readIndex();
@@ -48,9 +47,8 @@ public class VersionControlSystem extends VCSUtils {
         this.index = new File(index);
         this.branches = this.vcsDirectory.resolve("Branches");
         this.AllCommits = new File(AllCommits);
-        this.commitCache = new HashMap<>();
+        getAllCommits();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
-        this.commitCache.put(lastCommit.hash, lastCommit);
         this.branch = lastCommit.branch;
         this.tasks = new HashSet<>(lastCommit.tasks);
         readIndex();
@@ -185,7 +183,9 @@ public class VersionControlSystem extends VCSUtils {
         for (String s : closeTasks) {
             this.tasks.remove(s);
         }
-        this.lastCommit = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks, this.tasks);
+        Commit c = Commit.writeCommit(user, message, vcsDirectory, lastCommit, indexMap, this.branch, closeTasks, openTasks, this.tasks);
+        lastCommit.next.add(c);
+        lastCommit = c;
         commitCache.put(lastCommit.hash, lastCommit);
         FileWriter fw = new FileWriter(getHeadPath(), false);
         fw.write(lastCommit.hash);
@@ -629,6 +629,18 @@ public class VersionControlSystem extends VCSUtils {
                 vcsDirectory.resolve("Tasks").resolve(t).toFile().createNewFile();
             }
             this.tasks = new HashSet<>(c.tasks);
+        }
+    }
+
+    private void getAllCommits() throws Exception {
+        this.commitCache = new HashMap<>();
+        BufferedReader reader = new BufferedReader(new FileReader(AllCommits));
+        String line;
+        Commit c;
+        while ((line = reader.readLine()) != null) {
+            c = Commit.findCommit(line, vcsDirectory);
+            commitCache.put(line, c);
+            c.parentCommit(commitCache).next.add(c);
         }
     }
 }

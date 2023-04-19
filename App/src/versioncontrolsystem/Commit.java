@@ -21,7 +21,8 @@ public class Commit extends VCSUtils {
     private final Path vcsDirectory;
     public final Set<String> closed;
     public final Set<String> opened;
-    public Set<String> tasks;
+    public final List<Commit> next;
+    public final Set<String> tasks;
 
     public Commit(String hash, String tree, String lastCommit, String time,
                   String author, String branch, String message, Path vcsDirectory, Set<String> closed,
@@ -37,6 +38,7 @@ public class Commit extends VCSUtils {
         this.closed = closed;
         this.opened = opened;
         this.tasks = tasks;
+        this.next = new LinkedList<>();
     }
     public Commit(String hash, String tree, String lastCommit, String time,
                   String author, String branch, String message, Path vcsDirectory, Tree treeObject,
@@ -110,7 +112,7 @@ public class Commit extends VCSUtils {
     public static Commit findCommit(String hash, Path vcsDirectory) throws Exception {
         File file = findHash(hash, vcsDirectory).toFile();
         if (!file.exists()) {
-            throw new FailCaseException(String.format("versioncontrolsystem.Commit with hash %s does not exist", hash));
+            throw new FailCaseException(String.format("Commit with hash %s does not exist", hash));
         }
         BufferedReader reader = new BufferedReader(new FileReader(file));
         if (!reader.ready()) {

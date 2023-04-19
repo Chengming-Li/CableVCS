@@ -168,6 +168,7 @@ class VersionControlSystemTest {
             System.out.println(vcs.globalLog());
             vcs.checkout("master", true);
             assertEquals(6, vcs.globalLog().split("===").length-1);
+            vcs = new VersionControlSystem(TESTDIR);
         } catch (Exception e) {
             e.printStackTrace();
             fail();
