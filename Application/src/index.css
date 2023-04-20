@@ -40,13 +40,11 @@ body {
     color: #333;
     margin-right: 1vw;
     box-sizing: border-box;
-}
-  
+} 
 .image-button img {
     width: 2vw;
     height: 2vw;
 }
-
 .image-button span {
     color: #989898;
     display: block;
