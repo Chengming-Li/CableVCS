@@ -1,4 +1,4 @@
-const buttonOne = document.getElementById('buttonID');
+const buttonOne = document.getElementById('branchButton');
 
 // handles messages received by render.js
 window.electronAPI.onGetMessage((event, value) => {
@@ -33,4 +33,5 @@ window.electronAPI.updateRemoved((event, value) => {
 buttonOne.addEventListener('click', () => {
     window.electronAPI.init("C:\\Users\\malic\\Downloads\\Test")
     window.electronAPI.branch("Branch")
+    window.electronAPI.branch("Other Branch")
 })

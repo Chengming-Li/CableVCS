@@ -25,7 +25,7 @@ const createWindow = () => {
         },
     })
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
-
+    mainWindow.setMinimumSize(700, 500);
     // listen to messages in the Messages channel
     ipcMain.on("Messages", callVCSFunction)
 
@@ -76,7 +76,7 @@ app.on('ready', createWindow)
 
 const intervalID = setInterval(function() {
     callVCSFunction(null, String.fromCharCode(6) + "update");
-}, 1000);
+}, 400);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

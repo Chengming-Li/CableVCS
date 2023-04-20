@@ -6,6 +6,7 @@ body {
   padding: 2rem;
 }
 .leftbar {
+    position: absolute;
     width: 200px;
     height: 100%;
     background-color: #333;
@@ -16,7 +17,40 @@ body {
     padding-left: 10px;
     font-size: 9px;
 }
-.midBar {
-    margin-left: 200px;
-    padding: 20px;
+.HUD {
+    position: absolute;
+    width: 100%;
+    height: 10vh;
+    background-color: #333;
+    color: #fff;
+    position: top;
+    padding-top: 1vh;
+    left: 0;
+    top: 0;
+}
+.image-button {
+    display: inline;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    margin-right: 1vw;
+    box-sizing: border-box;
+}
+  
+.image-button img {
+    width: 2vw;
+    height: 2vw;
+}
+
+.image-button span {
+    color: #989898;
+    display: block;
+    margin-top: 4px;
+    font-size: 1vw;
+    font-weight: bold;
 }
