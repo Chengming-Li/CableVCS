@@ -18,14 +18,14 @@ const createWindow = () => {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
-        width: 800,
-        height: 600,
+        width: 1440,
+        height: 820,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
     })
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
-    mainWindow.setMinimumSize(700, 500);
+    mainWindow.setMinimumSize(1440, 820);
     // listen to messages in the Messages channel
     ipcMain.on("Messages", callVCSFunction)
 
