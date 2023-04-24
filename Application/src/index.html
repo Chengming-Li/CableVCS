@@ -1,69 +1,26 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>Hello World!</title>
-        <link rel="stylesheet" href="index.css" />
-        <script defer src="render.js"></script>
-    </head>
-    <body>
-        <div class="v1_2">
-            <div class="v5_38">
-                <div class="v1_4">
-                </div>
-                <div class="v4_26">
-
-                </div>
-                <span class="v5_45">Add Task</span>
-                <span class="v5_41">New Task</span>
-                <div class="name">
-
-                </div>
-                <div class="name">
-
-                </div>
-                <span class="v1_13">Tasks</span>
-                <div class="v5_39"></div></div>
-                <div class="v3_4"><div class="v1_3">
-
-                </div>
-                <div class="name">
-
-                </div>
-                <div class="name">
-
-                </div>
-                <div class="name">
-
-                </div>
-                <span class="v4_36">Staged Files</span>
-                <span class="v4_24">Unstaged Files</span>
-                <span class="v4_30">Commit Message</span>
-                <div class="v5_40">
-
-                </div>
-                <span class="v4_27">Commit</span>
-                <div class="v4_29"></div>
-            </div>
-            <div class="v4_35">
-                <div class="v1_9">
-
-                </div>
-                <div class="v4_34">
-                    <span class="v4_31">Revert</span>
-                    <div class="v4_33"></div>
-                </div>
-                <div class="v6_53">
-                    <span class="v6_54">Remove</span>
-                    <div class="v6_56"></div>
-                </div>
-                <div class="v6_49">
-                    <span class="v6_50">Branch</span>
-                    <div class="v6_52"></div>
-                </div>
-                <span class="v6_47">repository</span>
-                <span class="v6_48">Path</span>
-            </div>
-        </div>
-    </body>
+<head>
+    <meta charset="UTF-8" />
+    <title>CableVCS</title>
+    <link rel="stylesheet" href="index.css" />
+    <script defer src="render.js"></script>
+</head>
+<body>
+    <img src="images/VCS.png" alt="Full Screen Image" />
+    <div class="header" id="header">Hi</div>
+    <div class="tasks" id="tasks"></div>
+    <div class="stagingArea" id="stagingArea"></div>
+    <script>
+        const stagingArea = document.getElementById("stagingArea");
+        stagingArea.style.width = window.screen.width/100*22 + "px";
+        stagingArea.style.minWidth = window.screen.width/100*16.5 + "px";
+        const tasks = document.getElementById("tasks")
+        tasks.style.width = window.screen.width/100*11.7 + "px";
+        tasks.style.minWidth = window.screen.width/100*8.775 + "px";
+        const header = document.getElementById("header")
+        header.style.height = window.screen.width/100*3.8 + "px";
+        header.style.minHeight = window.screen.width/100*2.85 + "px";
+    </script>
+</body>
 </html>

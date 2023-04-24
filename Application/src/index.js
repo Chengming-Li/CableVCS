@@ -18,14 +18,18 @@ const createWindow = () => {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
-        width: 1440,
-        height: 820,
+        width: 1080,
+        height: 645,
+        minWidth: 1080,
+        minHeight: 645,
+        aspectRatio: 216/129,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
     })
+
+    // mainWindow.setAspectRatio(216/129)
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
-    mainWindow.setMinimumSize(1440, 820);
     // listen to messages in the Messages channel
     ipcMain.on("Messages", callVCSFunction)
 
