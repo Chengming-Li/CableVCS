@@ -3,6 +3,13 @@ body {
     padding: 0;
     background-color: #1C1E23;
     overflow: hidden;
+    font-family: 'Inter';
+}
+hr {
+    border: none;
+    width: 96%;
+    margin-left: 0 auto;
+    border-top: 2px solid #383B41;
 }
 .header {
     position: absolute;
@@ -11,13 +18,33 @@ body {
     height: 1px;
 	color: white;
 	text-align: left;
-    z-index: 5;
+    z-index: 11;
     float: top;
+    opacity: 1;
+}
+.header #repo {
+    position: absolute;
+    margin-top: 0;
+    top: 8px;
+    left: 15px;
+    font-size: 8px;
+    font-weight: medium;
+}
+.header #repoName {
+    position: absolute;
+    margin-top: 0;
+    top: 24px;
+    left: 15px;
+    font-size: 18px;
+    font-weight: medium;
+}
+.header #task-label-hr {
+    margin-top: -10px;
 }
 .tasks {
     position: absolute;
     background-color: #272A31;
-    height: 100vh;
+    height: 96.2vh;
     width: 1px;
 	max-width: 28vw;
 	color: white;
@@ -28,11 +55,68 @@ body {
 	overflow: auto;
     direction: ltr;
     border-right: 2px solid #383B41;
+    opacity: 1;
+    overflow-x: hidden;
+}
+.sidebar-label {
+    position: relative;
+    margin-top: 0;
+    top: 7px;
+    left: 10.5px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ADA5A3;
+}
+.new-task {
+    position: absolute;
+    width: 96%;
+	text-align: left;
+    z-index: 2;
+    bottom: 0;
+    left: 2%;
+    right: 2%;
+}
+#new-task-hr {
+    margin-bottom: -3px;
+    width: 100%;
+}
+.new-task #task-label {
+    position: relative;
+    bottom: 5px;
+    left: 6px;
+    font-size: 13px;
+    color: #ADA5A3;
+}
+.new-task input[type="text"] {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding-left: 4%;
+    padding-right: 4%;
+    bottom: 14px;
+    background-color: #1F2227;
+    color: white;
+}
+.new-task #add-new-task {
+    position: relative;
+    width: 100%;
+    height: 33px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    bottom: 9.5px;
+    background-color: #2C3835;
+    color: #75797B;
+    font-size: 75%;
 }
 .stagingArea {
     position: absolute;
     background-color: #272A31;
-    height: 100vh;
+    height: 1px;
     width: 1px;
     max-width: 35vw;
 	color: white;
@@ -43,13 +127,61 @@ body {
 	overflow: auto;
     direction: rtl;
     border-left: 2px solid #383B41;
+    opacity: 1;
 }
-img {
+#unstaged-files {
+    position: relative;
+    top: 31%;
+}
+.new-commit {
+    position: absolute;
+    width: 96%;
+	text-align: left;
+    z-index: 2;
+    bottom: 0;
+    left: 2%;
+    right: 2%;
+}
+.new-commit #commit-label {
+    position: relative;
+    bottom: 8px;
+    left: 6px;
+    font-size: 13px;
+    color: #ADA5A3;
+}
+.new-commit input[type="text"] {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding-left: 2%;
+    padding-right: 2%;
+    bottom: 14px;
+    background-color: #1F2227;
+    color: white;
+    direction: ltr;
+}
+.new-commit #add-new-task {
+    position: relative;
+    width: 100%;
+    height: 33px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    bottom: 9.5px;
+    background-color: #2C3835;
+    color: #75797B;
+    font-size: 75%;
+}
+.reference {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 10;
+    z-index: -10;
 }

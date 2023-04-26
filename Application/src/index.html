@@ -4,23 +4,54 @@
     <meta charset="UTF-8" />
     <title>CableVCS</title>
     <link rel="stylesheet" href="index.css" />
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
     <script defer src="render.js"></script>
 </head>
 <body>
-    <img src="images/VCS.png" alt="Full Screen Image" />
-    <div class="header" id="header">Hi</div>
-    <div class="tasks" id="tasks"></div>
-    <div class="stagingArea" id="stagingArea"></div>
+    <!--<img class="reference" src="images/VCS.png" alt="Full Screen Image" />-->
+    <div class="header" id="header">
+        <p id="repo">repository</p>
+        <p id="repoName">Path</p>
+    </div>
+    <div class="tasks" id="tasks">
+        <p id="taskHeader" class="sidebar-label">Tasks</p>
+        <hr id = "task-label-hr">
+        <div class = "new-task">
+            <hr id="new-task-hr">
+            <p id="task-label">New Task</p>
+            <input type="text" id="enter-task" name="enter-task" style="white-space: pre-wrap;">
+            <button id="add-new-task">Add Task</button>
+        </div>
+    </div>
+    <div class="stagingArea" id="stagingArea">
+        <div id="staged-files">
+            <p id="staged-files-label" class="sidebar-label">Staged Files</p>
+            <hr id = "staged-files-hr">
+        </div>
+        <div id="unstaged-files">
+            <p id="unstaged-files-label" class="sidebar-label">Unstaged Files</p>
+            <hr id = "unstaged-files-hr">
+        </div>
+        <div class = "new-commit">
+            <hr id="new-commit-hr">
+            <p id="commit-label">Commit Message</p>
+            <input type="text" id="enter-commit" name="enter-commit">
+            <button id="add-new-task">Commit</button>
+        </div>
+    </div>
     <script>
         const stagingArea = document.getElementById("stagingArea");
         stagingArea.style.width = window.screen.width/100*22 + "px";
-        stagingArea.style.minWidth = window.screen.width/100*16.5 + "px";
+        stagingArea.style.minWidth = window.screen.width/100*20 + "px";
+        stagingArea.style.top = window.screen.width/100*3.8 + "px";
+        stagingArea.style.height = `calc(100vh - ${window.screen.width/100*3.8}px)`;
         const tasks = document.getElementById("tasks")
         tasks.style.width = window.screen.width/100*11.7 + "px";
-        tasks.style.minWidth = window.screen.width/100*8.775 + "px";
+        tasks.style.minWidth = window.screen.width/100*10.5 + "px";
+        tasks.style.top = window.screen.width/100*3.8 + "px";
+        tasks.style.height = `calc(100vh - ${window.screen.width/100*3.8}px)`;
         const header = document.getElementById("header")
         header.style.height = window.screen.width/100*3.8 + "px";
-        header.style.minHeight = window.screen.width/100*2.85 + "px";
     </script>
 </body>
 </html>
