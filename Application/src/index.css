@@ -5,6 +5,9 @@ body {
     overflow: hidden;
     font-family: 'Inter';
 }
+p {
+    user-select: none;
+}
 hr {
     border: none;
     width: 96%;
@@ -113,6 +116,12 @@ hr {
     color: #75797B;
     font-size: 75%;
 }
+#completedTasks {
+    position: absolute;
+    top: 31%;
+    width: 100%;
+    left: 0%;
+}
 .stagingArea {
     position: absolute;
     background-color: #272A31;
@@ -128,6 +137,7 @@ hr {
     direction: rtl;
     border-left: 2px solid #383B41;
     opacity: 1;
+    justify-content: left;
 }
 #unstaged-files {
     position: absolute;
@@ -200,4 +210,26 @@ hr {
     width: 100%;
     height: auto;
     top: -17px;
+}
+.item {
+    position: relative;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    right: 2%;
+    left: 2%;
+    color: #ADA5A3;
+    padding: none;
+    height: 25px;
+    width: 96%;
+    top: -5px;
+}
+.item:hover {
+    background-color: #2b3446;
+}
+.item p {
+    position: relative;
+    left: 6px;
+    display: inline-block;
+    font-size: 13px;
 }

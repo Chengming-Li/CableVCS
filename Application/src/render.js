@@ -1,13 +1,22 @@
 // const buttonOne = document.getElementById('branchButton');
-
+//#region for getting all the elements
 const task = document.getElementById("tasks");
 const stage = document.getElementById("stagingArea");
 const log = document.getElementById("log");
 const logText = document.getElementById("logInfo");
+const stagedFiles = document.getElementById('staged-files');
+const unstagedFiles = document.getElementById('unstaged-files');
+const taskList = document.getElementById('taskList');
+const completedTasks = document.getElementById('completedTasks');
+//#endregion
 
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 
+//#region for setting up scrolling
+/**
+ * calculates and returns the width of the log area, based on the widths of the staging and tasks divs
+ */
 function setThirdWidth() {
     const tasksWidth = task.clientWidth;
     const stageWidth = stage.clientWidth;
@@ -21,34 +30,72 @@ const observer = new ResizeObserver(entries => {
 observer.observe(task);
 observer.observe(stage);
 setThirdWidth();
+//#endregion
 
-const stagedFiles = document.getElementById('staged-files');
-
-function addItem(name) {
+/**
+ * Adds a new item in the lists
+ * @param {*} name text shown on the item
+ * @param {*} status determines which list the item is added to:
+ *      0: staged files
+ *      1: unstaged files
+ *      2: to do list
+ *      3: completed tasks
+ */
+function addFile(name, status) {
+    let parent
+    let newParent
+    switch (status) {
+        case 0:
+            parent = stagedFiles
+            newParent = unstagedFiles
+            break;
+        case 1:
+            parent = unstagedFiles
+            newParent = stagedFiles
+            break;
+        case 2:
+            parent = taskList;
+            newParent = completedTasks
+            break;
+        default:
+            parent = completedTasks;
+            newParent = taskList
+    }
     // Create a new item div
     var item = document.createElement("div");
     item.className = "item";
   
     // Create a new text box
-    var textbox = document.createElement("input");
-    textbox.type = "text";
-    textbox.value = name;
+    var textbox = document.createElement('p');
+    textbox.textContent = name;
     item.appendChild(textbox);
-  
-    // Create a new delete button
-    var deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.onclick = function() {
-        stagedFiles.removeChild(item);
-    };
-    item.appendChild(deleteButton);
+    item.addEventListener("click", function() {
+        parent.removeChild(item);
+        newParent.appendChild(item);
+        let temp = parent;
+        parent = newParent;
+        newParent = temp;
+    });
   
     // Add the item to the list
-    stagedFiles.appendChild(item);
+    parent.appendChild(item);
 }
-addItem("One")
-addItem("Two")
 
+/**
+ * allows for the scroll wheel to work on the log area
+ */
+log.addEventListener('wheel', (event) => {
+    const minTop = logText.clientHeight - log.clientHeight + 17;
+    event.preventDefault();
+  
+    const scrollSpeed = .25; // adjust the scrolling speed
+    const deltaY = event.deltaY;
+    topPosition -= deltaY * scrollSpeed
+    topPosition = Math.max(Math.min(topPosition, maxTop), -minTop)
+    logText.style.top = topPosition + "px";
+});
+
+//#region for setting up IPC
 // handles messages received by render.js
 window.electronAPI.onGetMessage((event, value) => {
     console.log(value);
@@ -77,21 +124,13 @@ window.electronAPI.updateUntracked((event, value) => {
 window.electronAPI.updateRemoved((event, value) => {
     console.log("Removed: " + window.electronAPI.decodeConcatenation(value));
 })
+//#endregion
 
-// adds a listener to button that'll call the code inside
-/*buttonOne.addEventListener('click', () => {
-    window.electronAPI.init("C:\\Users\\malic\\Downloads\\Test")
-    window.electronAPI.branch("Branch")
-    window.electronAPI.branch("Other Branch")
-})*/
-
-log.addEventListener('wheel', (event) => {
-    const minTop = logText.clientHeight - log.clientHeight + 17;
-    event.preventDefault();
-  
-    const scrollSpeed = .25; // adjust the scrolling speed
-    const deltaY = event.deltaY;
-    topPosition -= deltaY * scrollSpeed
-    topPosition = Math.max(Math.min(topPosition, maxTop), -minTop)
-    logText.style.top = topPosition + "px";
-});
+addFile("One", 0)
+addFile("Twoaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
+addFile("Three", 1)
+addFile("Four", 1)
+addFile("Five", 2)
+addFile("Six", 2)
+addFile("Seven", 2)
+addFile("Eight", 3)
