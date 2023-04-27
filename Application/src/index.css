@@ -95,8 +95,8 @@ hr {
     outline: none;
     border-radius: 5px;
     box-sizing: border-box;
-    padding-left: 4%;
-    padding-right: 4%;
+    padding-left: 7px;
+    padding-right: 7px;
     bottom: 14px;
     background-color: #1F2227;
     color: white;
@@ -130,8 +130,10 @@ hr {
     opacity: 1;
 }
 #unstaged-files {
-    position: relative;
+    position: absolute;
     top: 31%;
+    width: 100%;
+    left: 0%;
 }
 .new-commit {
     position: absolute;
@@ -157,8 +159,8 @@ hr {
     outline: none;
     border-radius: 5px;
     box-sizing: border-box;
-    padding-left: 2%;
-    padding-right: 2%;
+    padding-left: 7px;
+    padding-right: 7px;
     bottom: 14px;
     background-color: #1F2227;
     color: white;
@@ -184,4 +186,18 @@ hr {
     height: 100%;
     object-fit: cover;
     z-index: -10;
+}
+.log {
+    position: absolute;
+    background-color: #1C1E23;
+    z-index: 5;
+    width: 50%;
+    height: 50%;
+    color: #75797B;
+}
+.log p {
+    position: relative;
+    width: 100%;
+    height: auto;
+    top: -17px;
 }

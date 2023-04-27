@@ -2,7 +2,6 @@
 // contextBridge is used to securely expose APIs to the renderer, and ipcRenderer is used to send messages
 const { contextBridge, ipcRenderer } = require('electron')
 
-
 function generateConcatenation(strings) {
     if (strings.constructor === String) {
         return String.fromCharCode(strings.length) + strings;
