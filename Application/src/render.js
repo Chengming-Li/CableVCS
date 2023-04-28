@@ -112,6 +112,7 @@ function addTask(name) {
     parent.appendChild(item);
 }
 
+//#region scrolling
 /**
  * allows for the scroll wheel to work on the log area
  */
@@ -125,6 +126,11 @@ log.addEventListener('wheel', (event) => {
     topPosition = Math.max(Math.min(topPosition, maxTop), -minTop)
     logText.style.top = topPosition + "px";
 });
+taskList.addEventListener('wheel', (event) => {
+    const scrollSpeed = .25; // adjust the scrolling speed
+    const deltaY = event.deltaY;
+});
+//#endregion
 
 //#region for setting up IPC
 // handles messages received by render.js
@@ -164,5 +170,23 @@ addFile("Four", 1)
 added.push("Five")
 addTask("Five")
 addTask("Six")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
+addTask("Seven")
+addTask("Eight")
 addTask("Seven")
 addTask("Eight")

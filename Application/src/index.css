@@ -59,7 +59,7 @@ hr {
     direction: ltr;
     border-right: 2px solid #383B41;
     opacity: 1;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 .sidebar-label {
     position: relative;
@@ -78,6 +78,7 @@ hr {
     bottom: 0;
     left: 2%;
     right: 2%;
+    height: auto;
 }
 #new-task-hr {
     margin-bottom: -3px;
@@ -230,4 +231,14 @@ hr {
 }
 .list {
     height: auto;
+    min-height: 100%;
+    position: relative;
+    z-index: -10;
+}
+#taskList {
+    height: 100%;
+}
+.sidebar {
+    background-color: #272A31;
+    width: 100%;
 }
