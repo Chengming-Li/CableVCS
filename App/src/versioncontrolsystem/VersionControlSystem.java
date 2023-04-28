@@ -19,12 +19,13 @@ public class VersionControlSystem extends VCSUtils {
     private final File index;  // index/staging area
     private Map<String, String> indexMap;  // map of index/staging area, [name] : [hash] [status]
     // just used for init()
-    private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks"};
+    private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks", "CompletedTasks"};
     private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
     private Map<String, Commit> commitCache;  // all commits
     private Set<Path> branchSet;  // Set containing path of all branch pointer
     private Set<String> tasks;
+    private Set<String> completedTasks;
     public VersionControlSystem(String currentDirectory) throws Exception {
         this.currentDirectory = Paths.get(currentDirectory);
         this.vcsDirectory = this.currentDirectory.resolve(".vcs");
@@ -35,7 +36,8 @@ public class VersionControlSystem extends VCSUtils {
         getAllCommits();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.branch = lastCommit.branch;
-        this.tasks = new HashSet<>(lastCommit.tasks);
+        this.tasks = getTasks();
+        this.completedTasks = getCompletedTasks();
         readIndex();
         branchSet = getBranches();
     }
@@ -50,7 +52,8 @@ public class VersionControlSystem extends VCSUtils {
         getAllCommits();
         this.lastCommit = Commit.getHeadCommit(this.vcsDirectory);
         this.branch = lastCommit.branch;
-        this.tasks = new HashSet<>(lastCommit.tasks);
+        this.tasks = getTasks();
+        this.completedTasks = getCompletedTasks();
         readIndex();
         branchSet = getBranches();
     }
@@ -642,5 +645,24 @@ public class VersionControlSystem extends VCSUtils {
             commitCache.put(line, c);
             c.parentCommit(commitCache).next.add(c);
         }
+    }
+
+    private Set<String> getTasks() throws Exception {
+        Set<String> tasks = new HashSet<>();
+        try (Stream<Path> walk = Files.walk(vcsDirectory.resolve("Tasks")).filter(path -> !Files.isDirectory(path))) {
+            for (Path p : walk.toList()) {
+                tasks.add(p.getFileName().toString());
+            }
+        }
+        return tasks;
+    }
+    private Set<String> getCompletedTasks() throws Exception {
+        Set<String> tasks = new HashSet<>();
+        try (Stream<Path> walk = Files.walk(vcsDirectory.resolve("CompletedTasks")).filter(path -> !Files.isDirectory(path))) {
+            for (Path p : walk.toList()) {
+                tasks.add(p.getFileName().toString());
+            }
+        }
+        return tasks;
     }
 }
