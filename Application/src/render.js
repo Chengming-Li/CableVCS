@@ -4,16 +4,24 @@ const task = document.getElementById("tasks");
 const stage = document.getElementById("stagingArea");
 const log = document.getElementById("log");
 const logText = document.getElementById("logInfo");
-const stagedFiles = document.getElementById('staged-files');
-const unstagedFiles = document.getElementById('unstaged-files');
-const taskList = document.getElementById('taskList');
+const stagedFiles = document.getElementById('staged-files-list');
+const unstagedFiles = document.getElementById('unstaged-files-list');
+const taskList = document.getElementById('tasksList');
 //#endregion
 
 const completed = [];
+const added = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 
-//#region for setting up scrolling
+function remove(list, element) {
+    let index = list.indexOf(element);
+    if (index > -1) {
+        list.splice(index, 1);
+    }
+}
+
+//#region for resizing
 /**
  * calculates and returns the width of the log area, based on the widths of the staging and tasks divs
  */
@@ -38,8 +46,6 @@ setThirdWidth();
  * @param {*} status determines which list the item is added to:
  *      0: staged files
  *      1: unstaged files
- *      2: to do list
- *      3: completed tasks
  */
 function addFile(name, status) {
     let parent
@@ -53,9 +59,6 @@ function addFile(name, status) {
             parent = unstagedFiles
             newParent = stagedFiles
             break;
-        default:
-            parent = taskList;
-            newParent = null;
     }
     // Create a new item div
     var item = document.createElement("div");
@@ -67,15 +70,42 @@ function addFile(name, status) {
     item.appendChild(textbox);
     item.addEventListener("click", function() {
         parent.removeChild(item);
-        if (newParent !== null) {
-            newParent.appendChild(item);
-            let temp = parent;
-            parent = newParent;
-            newParent = temp;
+        newParent.appendChild(item);
+        let tmp = parent;
+        parent = newParent;
+        newParent = tmp;
+    });
+  
+    // Add the item to the list
+    parent.appendChild(item);
+}
+function addTask(name) {
+    let parent = taskList
+    let clicked = false;
+    let newlyAdded = (added.includes(name));
+    var item = document.createElement("div");
+    item.className = "item";
+  
+    // Create a new text box
+    var textbox = document.createElement('p');
+    textbox.textContent = name;
+    item.appendChild(textbox);
+    item.addEventListener("click", function() {
+        if (clicked) {
+            item.style.backgroundColor = "";
+            remove(completed, name)
+            if (newlyAdded) {
+                added.push(name);
+            }
         } else {
-            completed.push(name);
+            item.style.backgroundColor = "#1e2431";
+            if (!newlyAdded) {
+                completed.push(name);
+            } else {
+                remove(added, name);
+            }
         }
-        
+        clicked = !clicked;
     });
   
     // Add the item to the list
@@ -131,7 +161,8 @@ addFile("One", 0)
 addFile("Twoaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
 addFile("Three", 1)
 addFile("Four", 1)
-addFile("Five", 2)
-addFile("Six", 2)
-addFile("Seven", 2)
-addFile("Eight", 3)
+added.push("Five")
+addTask("Five")
+addTask("Six")
+addTask("Seven")
+addTask("Eight")

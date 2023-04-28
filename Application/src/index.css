@@ -135,7 +135,7 @@ hr {
 }
 #unstaged-files {
     position: absolute;
-    top: 31%;
+    top: 40%;
     width: 100%;
     left: 0%;
 }
@@ -226,4 +226,8 @@ hr {
     left: 6px;
     display: inline-block;
     font-size: 13px;
+    font-weight: medium;
+}
+.list {
+    height: auto;
 }
