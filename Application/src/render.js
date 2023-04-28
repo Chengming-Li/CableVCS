@@ -7,9 +7,9 @@ const logText = document.getElementById("logInfo");
 const stagedFiles = document.getElementById('staged-files');
 const unstagedFiles = document.getElementById('unstaged-files');
 const taskList = document.getElementById('taskList');
-const completedTasks = document.getElementById('completedTasks');
 //#endregion
 
+const completed = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 
@@ -53,13 +53,9 @@ function addFile(name, status) {
             parent = unstagedFiles
             newParent = stagedFiles
             break;
-        case 2:
-            parent = taskList;
-            newParent = completedTasks
-            break;
         default:
-            parent = completedTasks;
-            newParent = taskList
+            parent = taskList;
+            newParent = null;
     }
     // Create a new item div
     var item = document.createElement("div");
@@ -71,10 +67,15 @@ function addFile(name, status) {
     item.appendChild(textbox);
     item.addEventListener("click", function() {
         parent.removeChild(item);
-        newParent.appendChild(item);
-        let temp = parent;
-        parent = newParent;
-        newParent = temp;
+        if (newParent !== null) {
+            newParent.appendChild(item);
+            let temp = parent;
+            parent = newParent;
+            newParent = temp;
+        } else {
+            completed.push(name);
+        }
+        
     });
   
     // Add the item to the list

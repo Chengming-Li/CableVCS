@@ -116,12 +116,6 @@ hr {
     color: #75797B;
     font-size: 75%;
 }
-#completedTasks {
-    position: absolute;
-    top: 31%;
-    width: 100%;
-    left: 0%;
-}
 .stagingArea {
     position: absolute;
     background-color: #272A31;
