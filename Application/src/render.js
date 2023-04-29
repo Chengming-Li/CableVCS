@@ -6,7 +6,10 @@ const log = document.getElementById("log");
 const logText = document.getElementById("logInfo");
 const stagedFiles = document.getElementById('staged-files-list');
 const unstagedFiles = document.getElementById('unstaged-files-list');
+const stagedParent = document.getElementById('staged-holder');
+const unstagedParent = document.getElementById('unstaged-holder');
 const taskList = document.getElementById('tasksList');
+const taskParent = document.getElementById('tasksListHolder');
 //#endregion
 
 const completed = [];
@@ -21,6 +24,36 @@ function remove(list, element) {
     }
 }
 
+//#region scrolling
+/**
+ * allows for the scroll wheel to work on the log area
+ */
+function addScroll(scrollable, parent, offset = 0) {
+    let tp = 0;
+    let tpOffset = scrollable.offsetTop
+    function scrollCode(event) {
+        event.preventDefault();
+        const scrollSpeed = .25; // adjust the scrolling speed
+        const deltaY = event.deltaY;
+        tp -= deltaY * scrollSpeed
+        tp = Math.max(-(scrollable.clientHeight - parent.clientHeight - offset), Math.min(tp, 0))
+        scrollable.style.top = tp + "px";
+    }
+    function correctTop() {
+        scrollable.style.top = Math.max(-(scrollable.clientHeight - parent.clientHeight - offset), 
+        Math.min(scrollable.offsetTop - tpOffset, 0)) + "px";
+    }
+    return {
+        sc: scrollCode,
+        ct: correctTop
+      }
+}
+const logScrollFunc = addScroll(logText, log, 30);
+logText.addEventListener('wheel', logScrollFunc.sc);
+const taskScrollFunc = addScroll(taskList, taskParent, 0);
+taskList.addEventListener('wheel', taskScrollFunc.sc);
+//#endregion
+
 //#region for resizing
 /**
  * calculates and returns the width of the log area, based on the widths of the staging and tasks divs
@@ -30,7 +63,7 @@ function setThirdWidth() {
     const stageWidth = stage.clientWidth;
     log.style.width = `calc(100vw - ${tasksWidth + stageWidth}px)`
     log.style.left = tasksWidth + "px"
-    logText.style.top = Math.max(Math.min(topPosition, maxTop), -(logText.clientHeight - log.clientHeight + 17)) + "px";
+    logScrollFunc.ct()
 }
 const observer = new ResizeObserver(entries => {
     setThirdWidth();
@@ -98,7 +131,7 @@ function addTask(name) {
                 added.push(name);
             }
         } else {
-            item.style.backgroundColor = "#1e2431";
+            item.style.backgroundColor = "#495778";
             if (!newlyAdded) {
                 completed.push(name);
             } else {
@@ -111,26 +144,6 @@ function addTask(name) {
     // Add the item to the list
     parent.appendChild(item);
 }
-
-//#region scrolling
-/**
- * allows for the scroll wheel to work on the log area
- */
-log.addEventListener('wheel', (event) => {
-    const minTop = logText.clientHeight - log.clientHeight + 17;
-    event.preventDefault();
-  
-    const scrollSpeed = .25; // adjust the scrolling speed
-    const deltaY = event.deltaY;
-    topPosition -= deltaY * scrollSpeed
-    topPosition = Math.max(Math.min(topPosition, maxTop), -minTop)
-    logText.style.top = topPosition + "px";
-});
-taskList.addEventListener('wheel', (event) => {
-    const scrollSpeed = .25; // adjust the scrolling speed
-    const deltaY = event.deltaY;
-});
-//#endregion
 
 //#region for setting up IPC
 // handles messages received by render.js
@@ -167,26 +180,7 @@ addFile("One", 0)
 addFile("Twoaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
 addFile("Three", 1)
 addFile("Four", 1)
-added.push("Five")
-addTask("Five")
-addTask("Six")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
-addTask("Seven")
-addTask("Eight")
+added.push("Four")
+for (let i = 0; i < 40; i++) {
+    addTask(""+i)
+}

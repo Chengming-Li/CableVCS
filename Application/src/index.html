@@ -14,13 +14,15 @@
         <p id="repoName">Path</p>
     </div>
     <div class="tasks" id="tasks">
-        <div id="taskListTop" class="sidebar">
+        <div id="taskListTop">
             <p id="taskHeader" class="sidebar-label">Tasks</p>
             <hr id = "task-label-hr">
         </div>
-        <div id="tasksList" class="list">
+        <div id="tasksListHolder" class="holder">
+            <div id="tasksList" class="list">
+            </div>
         </div>
-        <div class = "new-task sidebar">
+        <div class = "new-task">
             <hr id="new-task-hr">
             <p id="task-label">New Task</p>
             <input type="text" id="enter-task" name="enter-task" style="white-space: pre-wrap;">
@@ -31,13 +33,17 @@
         <div id="staged-files">
             <p id="staged-files-label" class="sidebar-label">Staged Files</p>
             <hr id = "staged-files-hr">
-            <div id="staged-files-list" class="list">
+            <div class="holder" id="staged-holder">
+                <div id="staged-files-list" class="list">
+                </div>
             </div>
         </div>
         <div id="unstaged-files">
             <p id="unstaged-files-label" class="sidebar-label">Unstaged Files</p>
             <hr id = "unstaged-files-hr">
-            <div id="unstaged-files-list" class="list">
+            <div class="holder" id="unstaged-holder">
+                <div id="unstaged-files-list" class="list">
+                </div>
             </div>
         </div>
         <div class = "new-commit">
@@ -48,7 +54,8 @@
         </div>
     </div>
     <div class="log" id="log">
-        <p id="logInfo">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Elementum nibh tellus molestie nunc non. Amet consectetur adipiscing elit duis tristique sollicitudin nibh sit. Dolor morbi non arcu risus. Lectus arcu bibendum at varius vel pharetra vel. Facilisi nullam vehicula ipsum a. Nisl pretium fusce id velit ut. Tellus in metus vulputate eu scelerisque felis imperdiet proin. Placerat vestibulum lectus mauris ultrices eros in cursus. Egestas purus viverra accumsan in nisl nisi scelerisque eu. Phasellus vestibulum lorem sed risus ultricies. Amet consectetur adipiscing elit ut aliquam purus sit amet. Nam at lectus urna duis convallis convallis tellus. Diam in arcu cursus euismod quis. Egestas pretium aenean pharetra magna.
+        <div id="logInfo">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Elementum nibh tellus molestie nunc non. Amet consectetur adipiscing elit duis tristique sollicitudin nibh sit. Dolor morbi non arcu risus. Lectus arcu bibendum at varius vel pharetra vel. Facilisi nullam vehicula ipsum a. Nisl pretium fusce id velit ut. Tellus in metus vulputate eu scelerisque felis imperdiet proin. Placerat vestibulum lectus mauris ultrices eros in cursus. Egestas purus viverra accumsan in nisl nisi scelerisque eu. Phasellus vestibulum lorem sed risus ultricies. Amet consectetur adipiscing elit ut aliquam purus sit amet. Nam at lectus urna duis convallis convallis tellus. Diam in arcu cursus euismod quis. Egestas pretium aenean pharetra magna.
 
             A scelerisque purus semper eget duis at tellus at. Eget nulla facilisi etiam dignissim diam. In ante metus dictum at. Erat imperdiet sed euismod nisi porta. Odio aenean sed adipiscing diam donec adipiscing. Varius duis at consectetur lorem donec massa. Porta lorem mollis aliquam ut porttitor leo a. Sem viverra aliquet eget sit amet tellus cras adipiscing. Nibh tortor id aliquet lectus proin nibh nisl. Tellus id interdum velit laoreet id donec ultrices tincidunt arcu. Interdum posuere lorem ipsum dolor sit amet consectetur. Nunc faucibus a pellentesque sit. Magna fermentum iaculis eu non diam phasellus vestibulum lorem. Nibh cras pulvinar mattis nunc sed blandit libero volutpat. Sit amet consectetur adipiscing elit ut aliquam.
             
@@ -86,7 +93,9 @@
             
             Vestibulum lorem sed risus ultricies tristique nulla aliquet enim tortor. Ullamcorper eget nulla facilisi etiam. Sit amet cursus sit amet dictum sit amet. Condimentum vitae sapien pellentesque habitant. Congue quisque egestas diam in arcu. Pellentesque adipiscing commodo elit at imperdiet dui accumsan sit. Rhoncus urna neque viverra justo nec ultrices dui sapien eget. Imperdiet massa tincidunt nunc pulvinar sapien. Pulvinar etiam non quam lacus suspendisse faucibus interdum posuere lorem. Sed vulputate mi sit amet mauris commodo quis. Diam vulputate ut pharetra sit amet aliquam id diam. Congue eu consequat ac felis donec et odio. Fringilla urna porttitor rhoncus dolor purus. Platea dictumst quisque sagittis purus sit amet volutpat. Nunc faucibus a pellentesque sit amet porttitor. Cursus in hac habitasse platea dictumst quisque sagittis purus. Nec tincidunt praesent semper feugiat nibh. Sem integer vitae justo eget magna. Condimentum mattis pellentesque id nibh.
             
-            Porta non pulvinar neque laoreet suspendisse interdum. Eros donec ac odio tempor orci dapibus ultrices in iaculis. Consequat mauris nunc congue nisi. Gravida in fermentum et sollicitudin ac. Pharetra vel turpis nunc eget lorem. In iaculis nunc sed augue lacus viverra. Parturient montes nascetur ridiculus mus mauris vitae ultricies leo integer. Condimentum mattis pellentesque id nibh tortor id aliquet. Sed velit dignissim sodales ut eu sem integer vitae. Vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Tellus in metus vulputate eu scelerisque felis imperdiet proin fermentum. Vitae elementum curabitur vitae nunc sed. Luctus venenatis lectus magna fringilla.</p>
+            Porta non pulvinar neque laoreet suspendisse interdum. Eros donec ac odio tempor orci dapibus ultrices in iaculis. Consequat mauris nunc congue nisi. Gravida in fermentum et sollicitudin ac. Pharetra vel turpis nunc eget lorem. In iaculis nunc sed augue lacus viverra. Parturient montes nascetur ridiculus mus mauris vitae ultricies leo integer. Condimentum mattis pellentesque id nibh tortor id aliquet. Sed velit dignissim sodales ut eu sem integer vitae. Vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Tellus in metus vulputate eu scelerisque felis imperdiet proin fermentum. Vitae elementum curabitur vitae nunc sed. Luctus venenatis lectus magna fringilla.
+            </p>
+        </div>
     </div>
     <script>
         const stagingArea = document.getElementById("stagingArea");
