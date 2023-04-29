@@ -29,18 +29,18 @@ function remove(list, element) {
  * allows for the scroll wheel to work on the log area
  */
 function addScroll(scrollable, parent, offset = 0) {
-    let tp = 0;
+    let tp = -offset;
     let tpOffset = scrollable.offsetTop
     function scrollCode(event) {
         event.preventDefault();
         const scrollSpeed = .25; // adjust the scrolling speed
         const deltaY = event.deltaY;
         tp -= deltaY * scrollSpeed
-        tp = Math.max(-(scrollable.clientHeight - parent.clientHeight - offset), Math.min(tp, 0))
+        tp = Math.max(Math.min(-(scrollable.clientHeight - parent.clientHeight), 0), Math.min(tp, 0))
         scrollable.style.top = tp + "px";
     }
     function correctTop() {
-        scrollable.style.top = Math.max(-(scrollable.clientHeight - parent.clientHeight - offset), 
+        scrollable.style.top = Math.max(Math.min(-(scrollable.clientHeight - parent.clientHeight), 0), 
         Math.min(scrollable.offsetTop - tpOffset, 0)) + "px";
     }
     return {
@@ -52,6 +52,10 @@ const logScrollFunc = addScroll(logText, log, 30);
 logText.addEventListener('wheel', logScrollFunc.sc);
 const taskScrollFunc = addScroll(taskList, taskParent, 0);
 taskList.addEventListener('wheel', taskScrollFunc.sc);
+const stagedScrollFunc = addScroll(stagedFiles, stagedParent, 0);
+stagedFiles.addEventListener('wheel', stagedScrollFunc.sc);
+const unstagedScrollFunc = addScroll(unstagedFiles, unstagedParent, -5);
+unstagedFiles.addEventListener('wheel', unstagedScrollFunc.sc);
 //#endregion
 
 //#region for resizing
@@ -104,6 +108,11 @@ function addFile(name, status) {
     item.addEventListener("click", function() {
         parent.removeChild(item);
         newParent.appendChild(item);
+        if (parent === stagedFiles) {
+            stagedScrollFunc.ct()
+        } else {
+            unstagedScrollFunc.ct()
+        }
         let tmp = parent;
         parent = newParent;
         newParent = tmp;
@@ -183,4 +192,7 @@ addFile("Four", 1)
 added.push("Four")
 for (let i = 0; i < 40; i++) {
     addTask(""+i)
+}
+for (let i = 0; i < 40; i++) {
+    addFile("" + i, 0)
 }
