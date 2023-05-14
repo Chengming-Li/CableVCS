@@ -44,6 +44,10 @@ hr {
 .header #task-label-hr {
     margin-top: -10px;
 }
+.header #getDir {
+    background-color: red;
+    height: 100%;
+}
 .tasks {
     position: absolute;
     background-color: #272A31;

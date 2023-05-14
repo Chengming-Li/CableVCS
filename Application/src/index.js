@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path')
 var mainWindow = null
@@ -26,6 +26,17 @@ const createWindow = () => {
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
+    })
+
+    ipcMain.handle('dialog:openDirectory', async () => {
+        const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openDirectory']
+        })
+        if (canceled) {
+            return
+        } else {
+            return filePaths[0]
+        }
     })
 
     // mainWindow.setAspectRatio(216/129)

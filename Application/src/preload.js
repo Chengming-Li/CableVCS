@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     branch: (arg) => ipcRenderer.send("Messages", generateConcatenation("branch") + generateConcatenation(arg)),
     removeBranch: (arg) => ipcRenderer.send("Messages", generateConcatenation("removeBranch") + generateConcatenation(arg)),
     reset: (arg) => ipcRenderer.send("Messages", generateConcatenation("reset") + generateConcatenation(arg)),
+    selectFolder: () => ipcRenderer.invoke('dialog:openDirectory'),
     // starts listening for messages
     onGetMessage: (callback) => ipcRenderer.on("Messages", callback), 
     onGetError: (callback) => ipcRenderer.on("Error", callback),

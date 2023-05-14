@@ -10,7 +10,14 @@ const stagedParent = document.getElementById('staged-holder');
 const unstagedParent = document.getElementById('unstaged-holder');
 const taskList = document.getElementById('tasksList');
 const taskParent = document.getElementById('tasksListHolder');
+const getDir = document.getElementById('getDir');
 //#endregion
+
+getDir.addEventListener('click', () => {
+    window.electronAPI.selectFolder().then(result=>{
+        console.log(result);
+    })
+});
 
 const completed = [];
 const added = [];
@@ -156,6 +163,7 @@ function addTask(name) {
 
 //#region for setting up IPC
 // handles messages received by render.js
+
 window.electronAPI.onGetMessage((event, value) => {
     console.log(value);
 })
@@ -185,14 +193,10 @@ window.electronAPI.updateRemoved((event, value) => {
 })
 //#endregion
 
+
 addFile("One", 0)
 addFile("Twoaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
 addFile("Three", 1)
 addFile("Four", 1)
 added.push("Four")
-for (let i = 0; i < 40; i++) {
-    addTask(""+i)
-}
-for (let i = 0; i < 40; i++) {
-    addFile("" + i, 0)
-}
+addTask("Five")
