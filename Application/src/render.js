@@ -97,7 +97,7 @@ observer.observe(stage);
 setThirdWidth();
 //#endregion
 
-//#region for files and tasks
+//#region for creating and deleting elements
 /**
  * Adds a new item in the lists
  * @param {*} name text shown on the item
@@ -203,6 +203,23 @@ function resetEverything() {
     completed.length = 0;
     added.length = 0;
 }
+function addCommit(text) {
+    var item = document.createElement("div");
+    item.className = "commitItem";
+    item.appendChild(document.createElement("hr"));
+    var textbox = document.createElement('p');
+    textbox.textContent = text;
+    item.appendChild(textbox);
+    var button = document.createElement('button');
+    button.innerText = "Revert"
+    button.setAttribute("id", "commitButton");
+    item.appendChild(button);
+    button.addEventListener("click", function() {
+        console.log("Button clicked!");
+    });
+    item.appendChild(document.createElement("hr"));
+    logText.appendChild(item);
+}
 //#endregion
 
 //#region for setting up IPC
@@ -244,4 +261,4 @@ addFile("Three", 1)
 addFile("Four", 1)
 added.push("Four")
 addTask("Five")
-resetEverything()
+addCommit("HALLO\nTHERE")

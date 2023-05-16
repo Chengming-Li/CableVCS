@@ -235,6 +235,10 @@ hr {
     margin-top: -17px;
     overflow: hidden;
 }
+.commitItem {
+}
+.commitItem #commitButton {
+}
 .item {
     position: relative;
     display: flex;
