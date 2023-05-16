@@ -145,7 +145,7 @@ hr {
 }
 #staged-files {
     position: absolute;
-    top: 0px;
+    top: 40%;
     width: 100%;
     left: 0%;
     height: calc(40% - 30px);
@@ -158,7 +158,7 @@ hr {
 }
 #unstaged-files {
     position: absolute;
-    top: 40%;
+    top: 0px;
     width: 100%;
     left: 0%;
     height: calc(60% - 140px);

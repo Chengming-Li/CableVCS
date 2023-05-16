@@ -31,6 +31,9 @@ getDir.addEventListener('click', () => {
 
 const completed = [];
 const added = [];
+const taskElementList = []
+const stagedFilesList = [];
+const unstagedFilesList = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 
@@ -94,6 +97,7 @@ observer.observe(stage);
 setThirdWidth();
 //#endregion
 
+//#region for files and tasks
 /**
  * Adds a new item in the lists
  * @param {*} name text shown on the item
@@ -104,14 +108,20 @@ setThirdWidth();
 function addFile(name, status) {
     let parent
     let newParent
+    let thisList;
+    let otherList;
     switch (status) {
         case 0:
             parent = stagedFiles
             newParent = unstagedFiles
+            thisList = stagedFilesList
+            otherList = unstagedFilesList
             break;
         case 1:
             parent = unstagedFiles
             newParent = stagedFiles
+            otherList = stagedFilesList
+            thisList = unstagedFilesList
             break;
     }
     // Create a new item div
@@ -133,7 +143,13 @@ function addFile(name, status) {
         let tmp = parent;
         parent = newParent;
         newParent = tmp;
+        remove(item)
+        otherList.push(item);
+        tmp = thisList;
+        thisList = otherList;
+        otherList = tmp;
     });
+    thisList.push(item);
   
     // Add the item to the list
     parent.appendChild(item);
@@ -169,7 +185,25 @@ function addTask(name) {
   
     // Add the item to the list
     parent.appendChild(item);
+    taskElementList.push(item);
 }
+function resetEverything() {
+    stagedFilesList.forEach(function(item) {
+        item.remove()
+    });
+    unstagedFilesList.forEach(function(item) {
+        item.remove()
+    });
+    taskElementList.forEach(function(item) {
+        item.remove()
+    })
+    stagedFilesList.length = 0;
+    unstagedFilesList.length = 0;
+    taskElementList.length = 0;
+    completed.length = 0;
+    added.length = 0;
+}
+//#endregion
 
 //#region for setting up IPC
 // handles messages received by render.js
@@ -210,3 +244,4 @@ addFile("Three", 1)
 addFile("Four", 1)
 added.push("Four")
 addTask("Five")
+resetEverything()
