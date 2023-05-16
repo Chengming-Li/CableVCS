@@ -11,11 +11,21 @@ const unstagedParent = document.getElementById('unstaged-holder');
 const taskList = document.getElementById('tasksList');
 const taskParent = document.getElementById('tasksListHolder');
 const getDir = document.getElementById('getDir');
+const repoName = document.getElementById('repoName');
 //#endregion
 
+var currentRepo = "";
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
-        console.log(result);
+        if (result !== undefined && currentRepo !== result) {
+            currentRepo = result;
+            if (currentRepo.length <= 20) {
+                repoName.textContent = currentRepo
+            } else {
+                repoName.textContent = currentRepo.substring(0, 17) + "...";
+            }
+            getDir.title = "Directory: " + result;
+        }
     })
 });
 

@@ -33,9 +33,9 @@ const createWindow = () => {
             properties: ['openDirectory']
         })
         if (canceled) {
-            return
+            return ""
         } else {
-            return filePaths[0]
+            return path.basename(filePaths[0])
         }
     })
 

@@ -45,8 +45,8 @@ hr {
     margin-top: -10px;
 }
 .header #getDir {
-    background-color: red;
     height: 100%;
+    width: 225px;
 }
 .tasks {
     position: absolute;
