@@ -1,6 +1,5 @@
 /*
 TO DO:
-    Create commit log system
     Create branch buttons and branch selection system(drop down on top left corner)
     Link up frontend with backend
 */
@@ -19,12 +18,15 @@ const taskList = document.getElementById('tasksList');
 const taskParent = document.getElementById('tasksListHolder');
 const getDir = document.getElementById('getDir');
 const repoName = document.getElementById('repoName');
+const branchDropDown = document.getElementById('branchDropDown');
 //#endregion
 
 var currentRepo = "";
+var currentBranch = "Main";
+const branches = [];
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
-        if (result !== undefined && currentRepo !== result) {
+        if (result !== undefined && currentRepo !== result && result.length > 0) {
             currentRepo = result;
             if (currentRepo.length <= 20) {
                 repoName.textContent = currentRepo
@@ -34,6 +36,26 @@ getDir.addEventListener('click', () => {
             getDir.title = "Directory: " + result;
         }
     })
+});
+// code to insert all the branches to branches list
+branches.push("Main")
+branches.push("AAA")
+branches.push("Create New Branch")
+branchDropDown.addEventListener('change', function() {
+    const selectedValue = this.value;
+    
+    if (selectedValue === 'Create New Branch') {
+        console.log('NEW BRANCH');
+        branchDropDown.value = currentBranch;
+    } else {
+        currentBranch = selectedValue;
+    }
+});
+branches.forEach(function(item) {
+    const option = document.createElement('option');
+    option.value = item;
+    option.textContent = item; 
+    branchDropDown.appendChild(option);
 });
 
 const completed = [];
@@ -205,14 +227,12 @@ function resetEverything() {
     taskElementList.forEach(function(item) {
         item.remove()
     })
-    commitLog.forEach(function(item) {
-        item.remove()
-    })
     stagedFilesList.length = 0;
     unstagedFilesList.length = 0;
     taskElementList.length = 0;
     completed.length = 0;
     added.length = 0;
+    resetCommitLog()
 }
 function addCommit(text, hash, message) {
     var item = document.createElement("div");
@@ -221,10 +241,7 @@ function addCommit(text, hash, message) {
     item.appendChild(document.createElement("hr"));
     var hashText = document.createElement('p');
     hashText.innerHTML = hash;
-    hashText.style.color = "white";
-    hashText.style.fontWeight = "bold";
-    hashText.style.fontSize = "15px";
-    hashText.style.left = "3.5%";
+    hashText.setAttribute("id", "hash");
     item.appendChild(hashText);
     var textbox = document.createElement('p');
     textbox.innerHTML = text.replace(/\n/g, "<br>");
@@ -240,6 +257,12 @@ function addCommit(text, hash, message) {
         console.log(hash);
     });
     logText.appendChild(item);
+}
+function resetCommitLog() {
+    commitLog.forEach(function(item) {
+        item.remove()
+    })
+    commitLog.length = 0;
 }
 //#endregion
 
@@ -285,4 +308,4 @@ addTask("Five")
 for (var i = 1; i <= 20; i++) {
     addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "message")
 }
-resetEverything()
+addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id donec ultrices tincidunt arcu non sodales neque sodales. Quam lacus suspendisse faucibus interdum posuere. Nunc lobortis mattis aliquam faucibus purus in massa tempor. Odio eu feugiat pretium nibh ipsum consequat nisl vel pretium. Cursus euismod quis viverra nibh cras pulvinar. Amet dictum sit amet justo. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Est ante in nibh mauris cursus mattis molestie a iaculis. Sociis natoque penatibus et magnis dis parturient montes nascetur. Tincidunt id aliquet risus feugiat in ante. Eu ultrices vitae auctor eu augue ut lectus arcu bibendum. Ante in nibh mauris cursus mattis. Turpis cursus in hac habitasse platea.")

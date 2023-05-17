@@ -24,6 +24,7 @@ hr {
     z-index: 11;
     float: top;
     opacity: 1;
+    display: flex;
 }
 .header #repo {
     position: absolute;
@@ -32,6 +33,7 @@ hr {
     left: 15px;
     font-size: 8px;
     font-weight: medium;
+    z-index: 2;
 }
 .header #repoName {
     position: absolute;
@@ -40,6 +42,7 @@ hr {
     left: 15px;
     font-size: 18px;
     font-weight: medium;
+    z-index: 2;
 }
 .header #task-label-hr {
     margin-top: -10px;
@@ -47,6 +50,39 @@ hr {
 .header #getDir {
     height: 100%;
     width: 225px;
+}
+.header #branch {
+    position: absolute;
+    margin-top: 0;
+    top: 8px;
+    left: 242px;
+    font-size: 8px;
+    font-weight: medium;
+    z-index: 10;
+}
+.header #getDir {
+    display: flex;
+    z-index: -1;
+}
+.header #selectBranch {
+    display: flex;
+    z-index: -1;
+    background-color: red;
+}
+.header #branchDropDown {
+    border: none;
+    background-color: #33373F;
+    min-width: 100px;
+    color: white;
+    text-align: left;
+    padding-left: 14px;
+    padding-top: 14px;
+    padding-right: 14px;
+    font-size: 18px;
+}
+.header #branchDropDown:focus,
+#branchDropDown:active {
+  outline: none;
 }
 .tasks {
     position: absolute;
@@ -228,6 +264,9 @@ hr {
     color: #75797B;
     overflow: hidden;
 }
+.log #branchSelect {
+    position: absolute;
+}
 .log #logInfo {
     position: relative;
     width: 100%;
@@ -241,6 +280,12 @@ hr {
     padding-bottom: 5px;
     color: #b8b9ac;
     font-size: 12px;
+}
+.commitItem #hash {
+    color: white;
+    font-weight: bold;
+    font-size: 15px;
+    left: 3.2%;
 }
 .commitItem button {
     position: relative;
@@ -265,6 +310,8 @@ hr {
     top: 0px;
     padding-top: 0px;
     left: 4%;
+    user-select: auto;
+    width: 92%;
 }
 .item {
     position: relative;
