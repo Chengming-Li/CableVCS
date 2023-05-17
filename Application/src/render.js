@@ -21,9 +21,27 @@ const repoName = document.getElementById('repoName');
 const branchDropDown = document.getElementById('branchDropDown');
 //#endregion
 
+// global variables
+const completed = [];
+const added = [];
+const taskElementList = []
+const stagedFilesList = [];
+const unstagedFilesList = [];
+const commitLog = [];
 var currentRepo = "";
-var currentBranch = "Main";
+var currentBranch = "";
 const branches = [];
+var topPosition = logText.offsetTop - 17;
+const maxTop = topPosition;
+
+function remove(list, element) {
+    let index = list.indexOf(element);
+    if (index > -1) {
+        list.splice(index, 1);
+    }
+}
+
+//#region for setting up header
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
         if (result !== undefined && currentRepo !== result && result.length > 0) {
@@ -37,10 +55,7 @@ getDir.addEventListener('click', () => {
         }
     })
 });
-// code to insert all the branches to branches list
-branches.push("Main")
-branches.push("AAA")
-branches.push("Create New Branch")
+
 branchDropDown.addEventListener('change', function() {
     const selectedValue = this.value;
     
@@ -51,28 +66,24 @@ branchDropDown.addEventListener('change', function() {
         currentBranch = selectedValue;
     }
 });
+
+// code to insert all the branches to branches list
+branches.push("Main")
+branches.push("AAA")
+
 branches.forEach(function(item) {
     const option = document.createElement('option');
     option.value = item;
     option.textContent = item; 
     branchDropDown.appendChild(option);
 });
-
-const completed = [];
-const added = [];
-const taskElementList = []
-const stagedFilesList = [];
-const unstagedFilesList = [];
-const commitLog = [];
-var topPosition = logText.offsetTop - 17;
-const maxTop = topPosition;
-
-function remove(list, element) {
-    let index = list.indexOf(element);
-    if (index > -1) {
-        list.splice(index, 1);
-    }
-}
+const newBranchButton = document.createElement('option');
+newBranchButton.value = "Create New Branch";
+newBranchButton.textContent = "Create New Branch"; 
+newBranchButton.style.backgroundColor = "white";
+newBranchButton.style.color = "#38343c";
+branchDropDown.appendChild(newBranchButton);
+//#endregion
 
 //#region scrolling
 /**
@@ -173,7 +184,7 @@ function addFile(name, status) {
         let tmp = parent;
         parent = newParent;
         newParent = tmp;
-        remove(item)
+        remove(thisList, item)
         otherList.push(item);
         tmp = thisList;
         thisList = otherList;
@@ -233,6 +244,9 @@ function resetEverything() {
     completed.length = 0;
     added.length = 0;
     resetCommitLog()
+    branches.length = 0;
+    branchDropDown.innerHTML = '';
+    currentBranch = ""
 }
 function addCommit(text, hash, message) {
     var item = document.createElement("div");
@@ -309,3 +323,4 @@ for (var i = 1; i <= 20; i++) {
     addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "message")
 }
 addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id donec ultrices tincidunt arcu non sodales neque sodales. Quam lacus suspendisse faucibus interdum posuere. Nunc lobortis mattis aliquam faucibus purus in massa tempor. Odio eu feugiat pretium nibh ipsum consequat nisl vel pretium. Cursus euismod quis viverra nibh cras pulvinar. Amet dictum sit amet justo. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Est ante in nibh mauris cursus mattis molestie a iaculis. Sociis natoque penatibus et magnis dis parturient montes nascetur. Tincidunt id aliquet risus feugiat in ante. Eu ultrices vitae auctor eu augue ut lectus arcu bibendum. Ante in nibh mauris cursus mattis. Turpis cursus in hac habitasse platea.")
+/*resetEverything()*/
