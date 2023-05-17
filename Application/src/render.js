@@ -1,3 +1,10 @@
+/*
+TO DO:
+    Create commit log system
+    Create branch buttons and branch selection system(drop down on top left corner)
+    Link up frontend with backend
+*/
+
 // const buttonOne = document.getElementById('branchButton');
 //#region for getting all the elements
 const task = document.getElementById("tasks");
@@ -34,6 +41,7 @@ const added = [];
 const taskElementList = []
 const stagedFilesList = [];
 const unstagedFilesList = [];
+const commitLog = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 
@@ -197,27 +205,40 @@ function resetEverything() {
     taskElementList.forEach(function(item) {
         item.remove()
     })
+    commitLog.forEach(function(item) {
+        item.remove()
+    })
     stagedFilesList.length = 0;
     unstagedFilesList.length = 0;
     taskElementList.length = 0;
     completed.length = 0;
     added.length = 0;
 }
-function addCommit(text) {
+function addCommit(text, hash, message) {
     var item = document.createElement("div");
+    commitLog.push(item);
     item.className = "commitItem";
     item.appendChild(document.createElement("hr"));
+    var hashText = document.createElement('p');
+    hashText.innerHTML = hash;
+    hashText.style.color = "white";
+    hashText.style.fontWeight = "bold";
+    hashText.style.fontSize = "15px";
+    hashText.style.left = "3.5%";
+    item.appendChild(hashText);
     var textbox = document.createElement('p');
-    textbox.textContent = text;
+    textbox.innerHTML = text.replace(/\n/g, "<br>");
     item.appendChild(textbox);
+    var messageBox = document.createElement('p');
+    messageBox.innerHTML = message.replace(/\n/g, "<br>");
+    messageBox.style.fontSize = "14px";
+    item.appendChild(messageBox);
     var button = document.createElement('button');
     button.innerText = "Revert"
-    button.setAttribute("id", "commitButton");
     item.appendChild(button);
     button.addEventListener("click", function() {
-        console.log("Button clicked!");
+        console.log(hash);
     });
-    item.appendChild(document.createElement("hr"));
     logText.appendChild(item);
 }
 //#endregion
@@ -261,4 +282,7 @@ addFile("Three", 1)
 addFile("Four", 1)
 added.push("Four")
 addTask("Five")
-addCommit("HALLO\nTHERE")
+for (var i = 1; i <= 20; i++) {
+    addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "message")
+}
+resetEverything()
