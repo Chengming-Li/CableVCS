@@ -302,7 +302,7 @@ window.electronAPI.updateUnstaged((event, value) => {
 })
 
 window.electronAPI.updateLog((event, value) => {
-    console.log("Log: " + window.electronAPI.decodeConcatenation(value));
+    console.log("Log: \n" + window.electronAPI.decodeConcatenation(value));
 })
 //#endregion
 
