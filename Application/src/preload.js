@@ -46,9 +46,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onGetError: (callback) => ipcRenderer.on("Error", callback),
     updateBranch: (callback) => ipcRenderer.on("Branches", callback),
     updateStaged: (callback) => ipcRenderer.on("Staged", callback),
-    updateModified: (callback) => ipcRenderer.on("Modified", callback),
-    updateUntracked: (callback) => ipcRenderer.on("Untracked", callback),
-    updateRemoved: (callback) => ipcRenderer.on("Removed", callback),
+    updateUnstaged: (callback) => ipcRenderer.on("Unstaged", callback),
+    updateLog: (callback) => ipcRenderer.on("Log", callback),
     generateConcatenation: (strings) => generateConcatenation(strings),
     decodeConcatenation: (strings) => decodeConcatenation(strings),
 })

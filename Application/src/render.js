@@ -44,14 +44,16 @@ function remove(list, element) {
 //#region for setting up header
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
-        if (result !== undefined && currentRepo !== result && result.length > 0) {
-            currentRepo = result;
+        if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
+            resetEverything();
+            currentRepo = result[0];
             if (currentRepo.length <= 20) {
                 repoName.textContent = currentRepo
             } else {
                 repoName.textContent = currentRepo.substring(0, 17) + "...";
             }
-            getDir.title = "Directory: " + result;
+            getDir.title = "Directory: " + result[0];
+            window.electronAPI.changeDir(result[1])
         }
     })
 });
@@ -248,7 +250,7 @@ function resetEverything() {
     branchDropDown.innerHTML = '';
     currentBranch = ""
 }
-function addCommit(text, hash, message) {
+function addCommit(text, hash) {
     var item = document.createElement("div");
     commitLog.push(item);
     item.className = "commitItem";
@@ -260,10 +262,6 @@ function addCommit(text, hash, message) {
     var textbox = document.createElement('p');
     textbox.innerHTML = text.replace(/\n/g, "<br>");
     item.appendChild(textbox);
-    var messageBox = document.createElement('p');
-    messageBox.innerHTML = message.replace(/\n/g, "<br>");
-    messageBox.style.fontSize = "14px";
-    item.appendChild(messageBox);
     var button = document.createElement('button');
     button.innerText = "Revert"
     item.appendChild(button);
@@ -299,16 +297,12 @@ window.electronAPI.updateStaged((event, value) => {
     console.log("Staged: " + window.electronAPI.decodeConcatenation(value));
 })
 
-window.electronAPI.updateModified((event, value) => {
-    console.log("Modified: " + window.electronAPI.decodeConcatenation(value));
+window.electronAPI.updateUnstaged((event, value) => {
+    console.log("Unstaged: " + window.electronAPI.decodeConcatenation(value));
 })
 
-window.electronAPI.updateUntracked((event, value) => {
-    console.log("Untracked: " + window.electronAPI.decodeConcatenation(value));
-})
-
-window.electronAPI.updateRemoved((event, value) => {
-    console.log("Removed: " + window.electronAPI.decodeConcatenation(value));
+window.electronAPI.updateLog((event, value) => {
+    console.log("Log: " + window.electronAPI.decodeConcatenation(value));
 })
 //#endregion
 
@@ -320,7 +314,7 @@ addFile("Four", 1)
 added.push("Four")
 addTask("Five")
 for (var i = 1; i <= 20; i++) {
-    addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "message")
+    addCommit("Date: 05/16/2023 18:04:31\nAuthor: User\n\nmessage", "c73094bd7dcbcc9adab20647963e8aa531ee7df5")
 }
-addCommit("Date: 05/16/2023 18:04:31\nAuthor: User", "c73094bd7dcbcc9adab20647963e8aa531ee7df5", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id donec ultrices tincidunt arcu non sodales neque sodales. Quam lacus suspendisse faucibus interdum posuere. Nunc lobortis mattis aliquam faucibus purus in massa tempor. Odio eu feugiat pretium nibh ipsum consequat nisl vel pretium. Cursus euismod quis viverra nibh cras pulvinar. Amet dictum sit amet justo. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Est ante in nibh mauris cursus mattis molestie a iaculis. Sociis natoque penatibus et magnis dis parturient montes nascetur. Tincidunt id aliquet risus feugiat in ante. Eu ultrices vitae auctor eu augue ut lectus arcu bibendum. Ante in nibh mauris cursus mattis. Turpis cursus in hac habitasse platea.")
+addCommit("Date: 05/16/2023 18:04:31\nAuthor: User\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id donec ultrices tincidunt arcu non sodales neque sodales. Quam lacus suspendisse faucibus interdum posuere. Nunc lobortis mattis aliquam faucibus purus in massa tempor. Odio eu feugiat pretium nibh ipsum consequat nisl vel pretium. Cursus euismod quis viverra nibh cras pulvinar. Amet dictum sit amet justo. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Est ante in nibh mauris cursus mattis molestie a iaculis. Sociis natoque penatibus et magnis dis parturient montes nascetur. Tincidunt id aliquet risus feugiat in ante. Eu ultrices vitae auctor eu augue ut lectus arcu bibendum. Ante in nibh mauris cursus mattis. Turpis cursus in hac habitasse platea.", "c73094bd7dcbcc9adab20647963e8aa531ee7df5")
 /*resetEverything()*/
