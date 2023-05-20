@@ -42,6 +42,7 @@ var currentBranch = "";
 const branches = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
+var user = "user";
 
 function remove(list, element) {
     let index = list.indexOf(element);
@@ -250,23 +251,23 @@ function addTask(name) {
     taskElementList.push(item);
     tasksList.push(name);
 }
-function resetEverything() {
+function resetStaged() {
     stagedFilesList.forEach(function(item) {
         item.remove()
     });
+    stagedFilesList.length = 0;
+}
+function resetUnstaged() {
     unstagedFilesList.forEach(function(item) {
         item.remove()
     });
-    taskElementList.forEach(function(item) {
-        item.remove()
-    })
-    stagedFilesList.length = 0;
     unstagedFilesList.length = 0;
-    taskElementList.length = 0;
-    tasksList.length = 0;
-    completed.length = 0;
-    added.length = 0;
-    resetCommitLog()
+}
+function resetEverything() {
+    resetStaged();
+    resetUnstaged();
+    resetTasks();
+    resetCommitLog();
     resetBranches();
     currentBranch = ""
     newCommit.value = "";
@@ -299,6 +300,15 @@ function resetCommitLog() {
         item.remove()
     })
     commitLog.length = 0;
+}
+function resetTasks() {
+    taskElementList.forEach(function(item) {
+        item.remove()
+    })
+    taskElementList.length = 0;
+    tasksList.length = 0;
+    completed.length = 0;
+    added.length = 0;
 }
 //#endregion
 
@@ -334,6 +344,7 @@ newCommit.addEventListener('input', function() {
 });
 newTaskButton.addEventListener('click', function() {
     if (newTask.value.length > 0 && !tasksList.includes(newTask.value)) {
+        added.push(newTask.value)
         addTask(newTask.value)
         setInactive(newTaskButton);
         newTask.value = "";
@@ -341,6 +352,11 @@ newTaskButton.addEventListener('click', function() {
 });
 newCommitButton.addEventListener('click', function() {
     if (newCommit.value.length > 0) {
+        /* console.log(completed)
+        console.log(added)
+        console.log(window.electronAPI.generateConcatenation([newCommit.value, user, completed, added]))*/
+        window.electronAPI.commit([newCommit.value, user, completed, added])
+        resetStaged()
         setInactive(newCommitButton);
         newCommit.value = "";
     }
@@ -363,24 +379,28 @@ window.electronAPI.updateBranch((event, value) => {
 })
 
 window.electronAPI.updateStaged((event, value) => {
+    resetStaged();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
         addFile(item, 0)
     })
 })
 
 window.electronAPI.updateUnstaged((event, value) => {
+    resetUnstaged();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
         addFile(item, 1)
     })
 })
 
 window.electronAPI.updateTasks((event, value) => {
+    resetTasks();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
         addTask(item)
     })
 })
 
 window.electronAPI.updateLog((event, value) => {
+    resetCommitLog();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
         let index = item.indexOf("\n");
         addCommit(item.substring(index + 1), item.substring(0, index))

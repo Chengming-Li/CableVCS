@@ -8,7 +8,12 @@ function generateConcatenation(input) {
     }
     let encodedString = '';
     for (let str of input) {
-        encodedString += str.length + '#' + str;
+        if (Array.isArray(str)) {
+            let temp = generateConcatenation(str);
+            encodedString += temp.length + '#' + temp;
+        } else {
+            encodedString += str.length + '#' + str;
+        }
     }
     return encodedString;
 }
