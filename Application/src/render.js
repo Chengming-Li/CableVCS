@@ -26,12 +26,15 @@ const newCommitButton = document.getElementById('add-new-commit');
 //#endregion
 
 // global variables
+// tasks
 const completed = [];
 const added = [];
-const taskElementList = []
+const taskElementList = [];
+// staging area
 const stagedFilesList = [];
 const unstagedFilesList = [];
 const commitLog = [];
+// other stuff
 var currentRepo = "";
 var currentBranch = "";
 const branches = [];
@@ -58,7 +61,6 @@ getDir.addEventListener('click', () => {
             }
             getDir.title = "Directory: " + result[0];
             window.electronAPI.changeDir(result[1])
-            console.log("HI")
         }
     })
 });
@@ -77,19 +79,27 @@ branchDropDown.addEventListener('change', function() {
 // code to insert all the branches to branches list
 branches.push("Main")
 branches.push("AAA")
-
-branches.forEach(function(item) {
-    const option = document.createElement('option');
-    option.value = item;
-    option.textContent = item; 
-    branchDropDown.appendChild(option);
-});
-const newBranchButton = document.createElement('option');
-newBranchButton.value = "Create New Branch";
-newBranchButton.textContent = "Create New Branch"; 
-newBranchButton.style.backgroundColor = "white";
-newBranchButton.style.color = "#38343c";
-branchDropDown.appendChild(newBranchButton);
+function addBranches(b) {
+    resetBranches();
+    currentBranch = b[0]
+    b.forEach(function(item) {
+        branches.push(item)
+        const option = document.createElement('option');
+        option.value = item;
+        option.textContent = item; 
+        branchDropDown.appendChild(option);
+    });
+    const newBranchButton = document.createElement('option');
+    newBranchButton.value = "Create New Branch";
+    newBranchButton.textContent = "Create New Branch"; 
+    newBranchButton.style.backgroundColor = "white";
+    newBranchButton.style.color = "#38343c";
+    branchDropDown.appendChild(newBranchButton);
+}
+function resetBranches() {
+    branches.length = 0;
+    branchDropDown.innerHTML = '';
+}
 //#endregion
 
 //#region scrolling
@@ -251,8 +261,7 @@ function resetEverything() {
     completed.length = 0;
     added.length = 0;
     resetCommitLog()
-    branches.length = 0;
-    branchDropDown.innerHTML = '';
+    resetBranches();
     currentBranch = ""
 }
 function addCommit(text, hash) {
@@ -304,31 +313,31 @@ window.electronAPI.onGetError((event, value) => {
 })
 
 window.electronAPI.updateBranch((event, value) => {
-    console.log("Branches: " + window.electronAPI.decodeConcatenation(value));
+    addBranches(window.electronAPI.decodeConcatenation(value));
 })
 
 window.electronAPI.updateStaged((event, value) => {
-    console.log("Staged: " + window.electronAPI.decodeConcatenation(value));
+    window.electronAPI.decodeConcatenation(value).forEach(function(item) {
+        addFile(item, 0)
+    })
 })
 
 window.electronAPI.updateUnstaged((event, value) => {
-    console.log("Unstaged: " + window.electronAPI.decodeConcatenation(value));
+    window.electronAPI.decodeConcatenation(value).forEach(function(item) {
+        addFile(item, 1)
+    })
+})
+
+window.electronAPI.updateTasks((event, value) => {
+    window.electronAPI.decodeConcatenation(value).forEach(function(item) {
+        addTask(item)
+    })
 })
 
 window.electronAPI.updateLog((event, value) => {
-    console.log("Log: \n[" + window.electronAPI.decodeConcatenation(value) + "]");
+    window.electronAPI.decodeConcatenation(value).forEach(function(item) {
+        let index = item.indexOf("\n");
+        addCommit(item.substring(index + 1), item.substring(0, index))
+    })
 })
 //#endregion
-
-
-addFile("One", 0)
-addFile("Twoaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 0)
-addFile("Three", 1)
-addFile("Four", 1)
-added.push("Four")
-addTask("Five")
-for (var i = 1; i <= 20; i++) {
-    addCommit("Date: 05/16/2023 18:04:31\nAuthor: User\n\nmessage", "c73094bd7dcbcc9adab20647963e8aa531ee7df5")
-}
-addCommit("Date: 05/16/2023 18:04:31\nAuthor: User\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Id donec ultrices tincidunt arcu non sodales neque sodales. Quam lacus suspendisse faucibus interdum posuere. Nunc lobortis mattis aliquam faucibus purus in massa tempor. Odio eu feugiat pretium nibh ipsum consequat nisl vel pretium. Cursus euismod quis viverra nibh cras pulvinar. Amet dictum sit amet justo. Praesent elementum facilisis leo vel fringilla est ullamcorper eget. Est ante in nibh mauris cursus mattis molestie a iaculis. Sociis natoque penatibus et magnis dis parturient montes nascetur. Tincidunt id aliquet risus feugiat in ante. Eu ultrices vitae auctor eu augue ut lectus arcu bibendum. Ante in nibh mauris cursus mattis. Turpis cursus in hac habitasse platea.", "c73094bd7dcbcc9adab20647963e8aa531ee7df5")
-/*resetEverything()*/

@@ -49,8 +49,6 @@ const createWindow = () => {
         const d = data.toString();
         if (!closed) {
             if (d.startsWith("Branches")) {
-                console.log(d)
-                console.log(d.substring(8));
                 mainWindow.webContents.send('Branches', d.substring(8));
             } else if (d.startsWith("Staged")) {
                 mainWindow.webContents.send('Staged', d.substring(6));
@@ -58,6 +56,8 @@ const createWindow = () => {
                 mainWindow.webContents.send('Unstaged', d.substring(8));
             } else if (d.startsWith("Log")) {
                 mainWindow.webContents.send('Log', d.substring(3));
+            } else if (d.startsWith("Tasks")) { 
+                mainWindow.webContents.send('Tasks', d.substring(5));
             } else {
                 mainWindow.webContents.send('Messages', d);
             }
