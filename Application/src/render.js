@@ -1,6 +1,7 @@
 /*
 TO DO:
     Create branch buttons and branch selection system(drop down on top left corner)
+    Create option for calling init()
     Link up frontend with backend
 */
 
@@ -30,6 +31,7 @@ const newCommitButton = document.getElementById('add-new-commit');
 const completed = [];
 const added = [];
 const taskElementList = [];
+const tasksList = [];
 // staging area
 const stagedFilesList = [];
 const unstagedFilesList = [];
@@ -211,6 +213,7 @@ function addFile(name, status) {
   
     // Add the item to the list
     parent.appendChild(item);
+    item.style.height = `${textbox.offsetHeight + 9}px`;
 }
 function addTask(name) {
     let parent = taskList
@@ -243,7 +246,9 @@ function addTask(name) {
   
     // Add the item to the list
     parent.appendChild(item);
+    item.style.height = `${textbox.offsetHeight + 9}px`;
     taskElementList.push(item);
+    tasksList.push(name);
 }
 function resetEverything() {
     stagedFilesList.forEach(function(item) {
@@ -258,11 +263,16 @@ function resetEverything() {
     stagedFilesList.length = 0;
     unstagedFilesList.length = 0;
     taskElementList.length = 0;
+    tasksList.length = 0;
     completed.length = 0;
     added.length = 0;
     resetCommitLog()
     resetBranches();
     currentBranch = ""
+    newCommit.value = "";
+    newTask.value = "";
+    setInactive(newTaskButton);
+    setInactive(newCommitButton);
 }
 function addCommit(text, hash) {
     var item = document.createElement("div");
@@ -293,11 +303,47 @@ function resetCommitLog() {
 //#endregion
 
 //#region for setting up buttons
+const activeColor = "#2ea44f";
+const activeText = "white";
+const baseColor = "#2C3835";
+const baseText = "#75797B";
+function setInactive(element) {
+    element.style.backgroundColor = baseColor;
+    element.style.color = baseText;
+    element.title = "";
+}
+newTask.addEventListener('input', function() {
+    if (newTask.value.length > 0 && !tasksList.includes(newTask.value)) {
+        newTaskButton.style.backgroundColor = activeColor;
+        newTaskButton.style.color = activeText;
+        newTaskButton.title = "";
+    } else {
+        setInactive(newTaskButton);
+        if (tasksList.includes(newTask.value)) {
+            newTaskButton.title = "Task Already Exists";
+        }
+    }
+});
+newCommit.addEventListener('input', function() {
+    if (newCommit.value.length > 0) {
+        newCommitButton.style.backgroundColor = activeColor;
+        newCommitButton.style.color = activeText;
+    } else {
+        setInactive(newCommitButton);
+    }
+});
 newTaskButton.addEventListener('click', function() {
-    console.log(newTask.value.replaceAll("\\0", "A"));
+    if (newTask.value.length > 0 && !tasksList.includes(newTask.value)) {
+        addTask(newTask.value)
+        setInactive(newTaskButton);
+        newTask.value = "";
+    }
 });
 newCommitButton.addEventListener('click', function() {
-    console.log(newCommit.value.replaceAll("\\0", "A"));
+    if (newCommit.value.length > 0) {
+        setInactive(newCommitButton);
+        newCommit.value = "";
+    }
 });
 //#endregion
 
