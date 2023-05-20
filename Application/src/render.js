@@ -19,6 +19,10 @@ const taskParent = document.getElementById('tasksListHolder');
 const getDir = document.getElementById('getDir');
 const repoName = document.getElementById('repoName');
 const branchDropDown = document.getElementById('branchDropDown');
+const newTask = document.getElementById('enter-task');
+const newTaskButton = document.getElementById('add-new-task');
+const newCommit = document.getElementById('enter-commit');
+const newCommitButton = document.getElementById('add-new-commit');
 //#endregion
 
 // global variables
@@ -54,6 +58,7 @@ getDir.addEventListener('click', () => {
             }
             getDir.title = "Directory: " + result[0];
             window.electronAPI.changeDir(result[1])
+            console.log("HI")
         }
     })
 });
@@ -278,6 +283,15 @@ function resetCommitLog() {
 }
 //#endregion
 
+//#region for setting up buttons
+newTaskButton.addEventListener('click', function() {
+    console.log(newTask.value.replaceAll("\\0", "A"));
+});
+newCommitButton.addEventListener('click', function() {
+    console.log(newCommit.value.replaceAll("\\0", "A"));
+});
+//#endregion
+
 //#region for setting up IPC
 // handles messages received by render.js
 
@@ -302,7 +316,7 @@ window.electronAPI.updateUnstaged((event, value) => {
 })
 
 window.electronAPI.updateLog((event, value) => {
-    console.log("Log: \n" + window.electronAPI.decodeConcatenation(value));
+    console.log("Log: \n[" + window.electronAPI.decodeConcatenation(value) + "]");
 })
 //#endregion
 

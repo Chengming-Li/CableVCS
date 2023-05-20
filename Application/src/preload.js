@@ -2,25 +2,27 @@
 // contextBridge is used to securely expose APIs to the renderer, and ipcRenderer is used to send messages
 const { contextBridge, ipcRenderer } = require('electron')
 
-function generateConcatenation(strings) {
-    if (strings.constructor === String) {
-        return String.fromCharCode(strings.length) + strings;
+function generateConcatenation(input) {
+    if (input.constructor === String) {
+        return input.length + '#' + input;
     }
-    let output = "";
-    for (let i = 0; i < strings.length; i++) {
-        output += String.fromCharCode(strings[i].length) + strings[i];
+    let encodedString = '';
+    for (let str of input) {
+        encodedString += str.length + '#' + str;
     }
-    return output
+    return encodedString;
 }
 
-function decodeConcatenation(strings) {
-    let list = []
+function decodeConcatenation(input) {
+    let list = [];
     let i = 0;
-    let num = 0;
-    while (i < strings.length) {
-        num = strings.charCodeAt(i);
-        list.push(strings.substring(i + 1, i + num + 1));
-        i += num + 1;
+    while (i < input.length) {
+        let j = i;
+        while (input.charAt(j) !== '#') j++;
+    
+        let length = parseInt(input.substring(i, j));
+        i = j + 1 + length;
+        list.push(input.substring(j + 1, i));
     }
     return list;
 }
@@ -28,18 +30,18 @@ function decodeConcatenation(strings) {
 // gives render.js access to these two methods
 contextBridge.exposeInMainWorld('electronAPI', {
     // VCS functions, take in a string or an array of strings as args
-    changeDir: (arg) => ipcRenderer.send("Messages", generateConcatenation("changeDir") + generateConcatenation(arg)),
-    init: (arg) => ipcRenderer.send("Messages", generateConcatenation("init") + generateConcatenation(arg)),
-    add: (arg) => ipcRenderer.send("Messages", generateConcatenation("add") + generateConcatenation(arg)),
-    commit: (arg) => ipcRenderer.send("Messages", generateConcatenation("commit") + generateConcatenation(arg)),
-    remove: (arg) => ipcRenderer.send("Messages", generateConcatenation("remove") + generateConcatenation(arg)),
-    log: (arg) => ipcRenderer.send("Messages", generateConcatenation("log") + generateConcatenation(arg)),
-    globalLog: (arg) => ipcRenderer.send("Messages", generateConcatenation("globalLog") + generateConcatenation(arg)),
-    status: (arg) => ipcRenderer.send("Messages", generateConcatenation("status") + generateConcatenation(arg)),
-    checkout: (arg) => ipcRenderer.send("Messages", generateConcatenation("checkout") + generateConcatenation(arg)),
-    branch: (arg) => ipcRenderer.send("Messages", generateConcatenation("branch") + generateConcatenation(arg)),
-    removeBranch: (arg) => ipcRenderer.send("Messages", generateConcatenation("removeBranch") + generateConcatenation(arg)),
-    reset: (arg) => ipcRenderer.send("Messages", generateConcatenation("reset") + generateConcatenation(arg)),
+    changeDir: (arg) => ipcRenderer.send("Messages", generateConcatenation(["changeDir", generateConcatenation(arg)])),
+    init: (arg) => ipcRenderer.send("Messages", generateConcatenation(["init", generateConcatenation(arg)])),
+    add: (arg) => ipcRenderer.send("Messages", generateConcatenation(["add", generateConcatenation(arg)])),
+    commit: (arg) => ipcRenderer.send("Messages", generateConcatenation(["commit", generateConcatenation(arg)])),
+    remove: (arg) => ipcRenderer.send("Messages", generateConcatenation(["remove", generateConcatenation(arg)])),
+    log: (arg) => ipcRenderer.send("Messages", generateConcatenation(["log", generateConcatenation(arg)])),
+    globalLog: (arg) => ipcRenderer.send("Messages", generateConcatenation(["globalLog", generateConcatenation(arg)])),
+    status: (arg) => ipcRenderer.send("Messages", generateConcatenation(["status", generateConcatenation(arg)])),
+    checkout: (arg) => ipcRenderer.send("Messages", generateConcatenation(["checkout", generateConcatenation(arg)])),
+    branch: (arg) => ipcRenderer.send("Messages", generateConcatenation(["branch", generateConcatenation(arg)])),
+    removeBranch: (arg) => ipcRenderer.send("Messages", generateConcatenation(["removeBranch", generateConcatenation(arg)])),
+    reset: (arg) => ipcRenderer.send("Messages", generateConcatenation(["reset", generateConcatenation(arg)])),
     selectFolder: () => ipcRenderer.invoke('dialog:openDirectory'),
     // starts listening for messages
     onGetMessage: (callback) => ipcRenderer.on("Messages", callback), 
@@ -49,5 +51,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateUnstaged: (callback) => ipcRenderer.on("Unstaged", callback),
     updateLog: (callback) => ipcRenderer.on("Log", callback),
     generateConcatenation: (strings) => generateConcatenation(strings),
-    decodeConcatenation: (strings) => decodeConcatenation(strings),
+    decodeConcatenation: (strings) => decodeConcatenation(strings.slice(0, -2)),
 })
