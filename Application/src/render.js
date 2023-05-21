@@ -1,11 +1,11 @@
 /*
 TO DO:
+    Fix bug creating an extra copy when staging files
+    Link up frontend with backend
     Create branch buttons and branch selection system(drop down on top left corner)
     Create option for calling init()
-    Link up frontend with backend
 */
 
-// const buttonOne = document.getElementById('branchButton');
 //#region for getting all the elements
 const task = document.getElementById("tasks");
 const stage = document.getElementById("stagingArea");
@@ -38,6 +38,7 @@ const unstagedFilesList = [];
 const commitLog = [];
 // other stuff
 var currentRepo = "";
+var currentPath = "";
 var currentBranch = "";
 const branches = [];
 var topPosition = logText.offsetTop - 17;
@@ -57,6 +58,7 @@ getDir.addEventListener('click', () => {
         if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
             resetEverything();
             currentRepo = result[0];
+            currentPath = result[1];
             if (currentRepo.length <= 20) {
                 repoName.textContent = currentRepo
             } else {
@@ -171,18 +173,44 @@ function addFile(name, status) {
     let newParent
     let thisList;
     let otherList;
+    let stageFunc;
+    let otherFunc;
+    let fileName;
+    if (name.endsWith(" | (deleted)")) {
+        fileName = name.substring(0, name.length - 12)
+    } else if (name.endsWith(" | (modified)")) {
+        fileName = name.substring(0, name.length - 13)
+    } else if (name.endsWith(" | (untracked)")) {
+        fileName = name.substring(0, name.length - 14)
+    } else {
+        fileName = name
+    }
     switch (status) {
         case 0:
             parent = stagedFiles
             newParent = unstagedFiles
             thisList = stagedFilesList
             otherList = unstagedFilesList
+            stageFunc = () => {
+                window.electronAPI.remove(fileName)
+            }
+            otherFunc = () => {
+                window.electronAPI.add(fileName)
+            }
+            //stageFunc = window.electronAPI.remove(name);
             break;
         case 1:
             parent = unstagedFiles
             newParent = stagedFiles
             otherList = stagedFilesList
             thisList = unstagedFilesList
+            stageFunc = () => {
+                window.electronAPI.add(fileName)
+            }
+            otherFunc = () => {
+                window.electronAPI.remove(fileName)
+            }
+            //stageFunc = window.electronAPI.add(name);
             break;
     }
     // Create a new item div
@@ -194,6 +222,7 @@ function addFile(name, status) {
     textbox.textContent = name;
     item.appendChild(textbox);
     item.addEventListener("click", function() {
+        stageFunc()
         parent.removeChild(item);
         newParent.appendChild(item);
         if (parent === stagedFiles) {
@@ -209,6 +238,9 @@ function addFile(name, status) {
         tmp = thisList;
         thisList = otherList;
         otherList = tmp;
+        tmp = stageFunc
+        stageFunc = otherFunc
+        otherFunc = tmp
     });
     thisList.push(item);
   
@@ -352,9 +384,6 @@ newTaskButton.addEventListener('click', function() {
 });
 newCommitButton.addEventListener('click', function() {
     if (newCommit.value.length > 0) {
-        /* console.log(completed)
-        console.log(added)
-        console.log(window.electronAPI.generateConcatenation([newCommit.value, user, completed, added]))*/
         window.electronAPI.commit([newCommit.value, user, completed, added])
         resetStaged()
         setInactive(newCommitButton);
@@ -381,6 +410,7 @@ window.electronAPI.updateBranch((event, value) => {
 window.electronAPI.updateStaged((event, value) => {
     resetStaged();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
+        console.log(item)
         addFile(item, 0)
     })
 })
