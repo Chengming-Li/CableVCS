@@ -1,6 +1,5 @@
 /*
 TO DO:
-    Fix bug creating an extra copy when staging files
     Link up frontend with backend
     Create branch buttons and branch selection system(drop down on top left corner)
     Create option for calling init()
@@ -76,8 +75,12 @@ branchDropDown.addEventListener('change', function() {
     if (selectedValue === 'Create New Branch') {
         console.log('NEW BRANCH');
         branchDropDown.value = currentBranch;
-    } else {
+    } else if (selectedValue !== currentBranch) {
         currentBranch = selectedValue;
+        console.log(currentBranch);
+        changeBranch()
+        window.electronAPI.checkout([selectedValue, "booleanTrue"])
+        branchDropDown.value = currentBranch;
     }
 });
 
@@ -307,6 +310,13 @@ function resetEverything() {
     setInactive(newTaskButton);
     setInactive(newCommitButton);
 }
+function changeBranch() {
+    resetStaged();
+    resetUnstaged();
+    resetTasks();
+    resetCommitLog();
+    resetBranches();
+}
 function addCommit(text, hash) {
     var item = document.createElement("div");
     commitLog.push(item);
@@ -410,7 +420,6 @@ window.electronAPI.updateBranch((event, value) => {
 window.electronAPI.updateStaged((event, value) => {
     resetStaged();
     window.electronAPI.decodeConcatenation(value).forEach(function(item) {
-        console.log(item)
         addFile(item, 0)
     })
 })

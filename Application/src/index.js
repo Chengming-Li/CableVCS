@@ -58,8 +58,9 @@ const createWindow = () => {
                 mainWindow.webContents.send('Log', d.substring(3));
             } else if (d.startsWith("Tasks")) { 
                 mainWindow.webContents.send('Tasks', d.substring(5));
-            } else {
-                mainWindow.webContents.send('Messages', d);
+            } else if (!d.startsWith("IGNORE")) {
+                console.log(d);
+                // mainWindow.webContents.send('Messages', d);
             }
         }
     }
