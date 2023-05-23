@@ -58,8 +58,10 @@ const createWindow = () => {
                 mainWindow.webContents.send('Log', d.substring(3));
             } else if (d.startsWith("Tasks")) { 
                 mainWindow.webContents.send('Tasks', d.substring(5));
-            }else if (!d.startsWith("IGNORE")) {
-                console.log(d);
+            } else if (d.startsWith("ERROR:")) {
+                mainWindow.webContents.send('Error', d.substring(7));
+            } else if (!d.startsWith("IGNORE")) {
+                console.log(d + "V");
             }
         }
     }
@@ -67,7 +69,7 @@ const createWindow = () => {
     vcs.stderr.on('data', (data) => {
         if (!closed) {
             mainWindow.webContents.send('Error', data.toString());
-            console.log(data.toString());
+            // console.log(data.toString());
         }
     });
 

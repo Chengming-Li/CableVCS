@@ -1,8 +1,7 @@
 /*
 TO DO:
-    Link up frontend with backend(create status loop)
-    Create branch buttons and branch selection system(drop down on top left corner)
-    Create option for calling init()
+    Add functionality to revert
+    Allow for creation of new branches
 */
 
 //#region for getting all the elements
@@ -23,6 +22,8 @@ const newTask = document.getElementById('enter-task');
 const newTaskButton = document.getElementById('add-new-task');
 const newCommit = document.getElementById('enter-commit');
 const newCommitButton = document.getElementById('add-new-commit');
+const initDiv = document.getElementById("init");
+const initButton = document.getElementById("init-button");
 //#endregion
 
 // global variables
@@ -60,19 +61,22 @@ getDir.addEventListener('click', () => {
             resetEverything();
             currentRepo = result[0];
             currentPath = result[1];
-            if (currentRepo.length <= 20) {
-                repoName.textContent = currentRepo
-            } else {
-                repoName.textContent = currentRepo.substring(0, 17) + "...";
-            }
-            getDir.title = "Directory: " + result[0];
-            window.electronAPI.changeDir(result[1])
-            intervalId = setInterval(function() {
-                window.electronAPI.updateStatus();
-            }, 1000);
+            populate();
         }
     })
 });
+function populate() {
+    if (currentRepo.length <= 20) {
+        repoName.textContent = currentRepo
+    } else {
+        repoName.textContent = currentRepo.substring(0, 17) + "...";
+    }
+    getDir.title = "Directory: " + currentRepo;
+    window.electronAPI.changeDir(currentPath)
+    intervalId = setInterval(function() {
+        window.electronAPI.updateStatus();
+    }, 1000);
+}
 
 branchDropDown.addEventListener('change', function() {
     const selectedValue = this.value;
@@ -362,8 +366,13 @@ function resetTasks() {
 //#endregion
 
 //#region for setting up buttons
+initButton.addEventListener('click', () => {
+    initDiv.style.display = "none";
+    window.electronAPI.init([currentPath]);
+    populate()
+});
 const activeColor = "#2ea44f";
-const activeText = "white";
+const activeText = "#f2f2f2";
 const baseColor = "#2C3835";
 const baseText = "#75797B";
 function setInactive(element) {
@@ -417,7 +426,11 @@ window.electronAPI.onGetMessage((event, value) => {
 })
 // handles errors received by render.js
 window.electronAPI.onGetError((event, value) => {
-    alert("ERROR: " + value);
+    if (value.startsWith("No VCS Directory Found")) {
+        initDiv.style.display = "flex";
+    } else {
+        alert("ERROR: " + value);
+    }
 })
 
 window.electronAPI.updateBranch((event, value) => {

@@ -106,7 +106,7 @@ public class VersionControlSystem extends VCSUtils {
         Path start = Paths.get(dir);
         File vcs = start.resolve(".vcs").toFile();
         if (!Files.exists(start)) {
-            throw new FailCaseException("Directory doesn't exist");
+            throw new FailCaseException("Directory doesn't exist: " + dir);
         }
         if (vcs.exists()) {
             throw new FailCaseException("Version Control System already exists");
