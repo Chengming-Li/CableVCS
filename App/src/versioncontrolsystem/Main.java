@@ -71,9 +71,8 @@ public class Main {
                             vcs.reset(arguments[0]);
                             updateStatus(vcs);
                         }
-                        case "update" -> {
-                            // updateStatus(vcs);
-                            System.out.println("Update");
+                        case "updateStatus" -> {
+                            updateStatus(vcs);
                         }
                     }
                 }

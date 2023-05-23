@@ -1,7 +1,6 @@
 /*
 TO DO:
-    Fix bug of commit log not updating correctly when branches change(check to make sure the head pointer is correct)
-    Link up frontend with backend
+    Link up frontend with backend(create status loop)
     Create branch buttons and branch selection system(drop down on top left corner)
     Create option for calling init()
 */
@@ -44,6 +43,7 @@ const branches = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 var user = "user";
+var intervalId;
 
 function remove(list, element) {
     let index = list.indexOf(element);
@@ -55,6 +55,7 @@ function remove(list, element) {
 //#region for setting up header
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
+        clearInterval(intervalId);
         if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
             resetEverything();
             currentRepo = result[0];
@@ -66,6 +67,9 @@ getDir.addEventListener('click', () => {
             }
             getDir.title = "Directory: " + result[0];
             window.electronAPI.changeDir(result[1])
+            intervalId = setInterval(function() {
+                window.electronAPI.updateStatus();
+            }, 1000);
         }
     })
 });
@@ -208,6 +212,7 @@ function addFile(name, status) {
             thisList = unstagedFilesList
             stageFunc = () => {
                 window.electronAPI.add(fileName)
+                
             }
             otherFunc = () => {
                 window.electronAPI.remove(fileName)
@@ -243,6 +248,9 @@ function addFile(name, status) {
         tmp = stageFunc
         stageFunc = otherFunc
         otherFunc = tmp
+        if (stagedFilesList.length <= 0) {
+            setInactive(newCommitButton);
+        }
     });
     thisList.push(item);
   
@@ -376,7 +384,7 @@ newTask.addEventListener('input', function() {
     }
 });
 newCommit.addEventListener('input', function() {
-    if (newCommit.value.length > 0) {
+    if (newCommit.value.length > 0 && stagedFilesList.length > 0) {
         newCommitButton.style.backgroundColor = activeColor;
         newCommitButton.style.color = activeText;
     } else {
@@ -392,7 +400,7 @@ newTaskButton.addEventListener('click', function() {
     }
 });
 newCommitButton.addEventListener('click', function() {
-    if (newCommit.value.length > 0) {
+    if (newCommit.value.length > 0 && stagedFilesList.length > 0) {
         window.electronAPI.commit([newCommit.value, user, completed, added])
         resetStaged()
         setInactive(newCommitButton);
