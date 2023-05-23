@@ -1,5 +1,6 @@
 /*
 TO DO:
+    Fix bug of commit log not updating correctly when branches change(check to make sure the head pointer is correct)
     Link up frontend with backend
     Create branch buttons and branch selection system(drop down on top left corner)
     Create option for calling init()
@@ -77,10 +78,8 @@ branchDropDown.addEventListener('change', function() {
         branchDropDown.value = currentBranch;
     } else if (selectedValue !== currentBranch) {
         currentBranch = selectedValue;
-        console.log(currentBranch);
         changeBranch()
         window.electronAPI.checkout([selectedValue, "booleanTrue"])
-        branchDropDown.value = currentBranch;
     }
 });
 
@@ -315,7 +314,7 @@ function changeBranch() {
     resetUnstaged();
     resetTasks();
     resetCommitLog();
-    resetBranches();
+
 }
 function addCommit(text, hash) {
     var item = document.createElement("div");

@@ -35,8 +35,16 @@ public class Commit extends VCSUtils {
         this.branch = branch;
         this.message = message;
         this.vcsDirectory = vcsDirectory;
-        this.closed = closed;
-        this.opened = opened;
+        if (closed == null) {
+            this.closed = new HashSet<>();
+        } else {
+            this.closed = closed;
+        }
+        if (opened == null) {
+            this.opened = new HashSet<>();
+        } else {
+            this.opened = opened;
+        }
         this.tasks = tasks;
         this.next = new LinkedList<>();
     }
@@ -102,6 +110,28 @@ public class Commit extends VCSUtils {
         sb.append(this.message).append("\n");
         return sb.toString();
     }
+    public String toOutputString(boolean global) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%s\nDate: %s\nAuthor: %s\n", hash, time, author));
+        if (global) {
+            sb.append(String.format("Branch: %s\n", this.branch));
+        }
+        if (this.opened.size() > 0) {
+            sb.append("\nOpened Tasks:\n");
+            for (String s : this.opened) {
+                sb.append(s).append("\n");
+            }
+        }
+        if (this.closed.size() > 0) {
+            sb.append("\nClosed Tasks:\n");
+            for (String s : this.closed) {
+                sb.append(s).append("\n");
+            }
+        }
+        sb.append("\n");
+        sb.append(this.message);
+        return sb.toString();
+    }
 
     /**
      * Returns a commit object of the commit in the hash
@@ -140,7 +170,7 @@ public class Commit extends VCSUtils {
         while ((line = reader.readLine()) != null && !line.equals("===")) {
             sb.append(line).append("\n");
         }
-        sb.delete(sb.length()-2, sb.length());
+        sb.delete(sb.length()-1, sb.length());
         reader.close();
         return new Commit(hash, args.get(0), args.get(1),
                 args.get(2), args.get(3), args.get(4), sb.toString(), vcsDirectory, closed, opened, tasks);
@@ -161,24 +191,22 @@ public class Commit extends VCSUtils {
      * @return commit object
      */
     public static Commit getHeadCommit(Path vcsDirectory, String branch, Map<String, Commit> cache) throws Exception {
+        vcsDirectory.resolve("Branches").toFile().setReadable(true, false);
         Path p = vcsDirectory.resolve("Branches").resolve(branch);
+        p.toFile().setReadable(true, false);
         if (!Files.exists(p)) {
             throw new Exception(String.format("Branch \"%s\" does not exist", branch));
         }
-        List<String> lastCommit = Files.readAllLines(p);
-        if (lastCommit.size() == 0) {
-            throw new Exception(String.format("Branch \"%s\" not formatted correctly", branch));
-        } else {
-            return findCommit(lastCommit.get(0), vcsDirectory, cache);
-        }
+        BufferedReader br = new BufferedReader(new FileReader(p.toFile()));
+        return findCommit(br.readLine(), vcsDirectory, cache);
     }
-    public static Commit getHeadCommit(Path vcsDirectory) throws Exception {
+    public static Commit getHeadCommit(Path vcsDirectory, Map<String, Commit> cache) throws Exception {
         String headBranch = Files.readAllLines(vcsDirectory.resolve("HEAD")).get(0);
         List<String> lastCommit = Files.readAllLines(Path.of(headBranch));
         if (lastCommit.size() == 0) {
             throw new Exception(String.format("Branch \"%s\" not formatted correctly", headBranch));
         } else {
-            return findCommit(lastCommit.get(0), vcsDirectory);
+            return findCommit(lastCommit.get(0), vcsDirectory, cache);
         }
     }
 
@@ -210,8 +238,8 @@ public class Commit extends VCSUtils {
         sb.append(time).append("\n").append(user).append("\n").append(branch).append("\n===\n");
         tasks = new HashSet<>(tasks);
         for (String s : opened) {
+            new File(vcsDirectory.resolve("Tasks").resolve(s).toString()).createNewFile();
             sb.append(s).append("\n");
-            tasks.add(s);
         }
         File p;
         sb.append("===\n");
@@ -221,7 +249,6 @@ public class Commit extends VCSUtils {
             if (p.exists()) {
                 p.delete();
             }
-            tasks.remove(s);
         }
         sb.append("===\n");
         for (String s : tasks) {

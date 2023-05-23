@@ -1,7 +1,10 @@
 package versioncontrolsystem;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,21 +12,14 @@ import java.util.Set;
 
 public class Main {
     private static void updateStatus(VersionControlSystem vcs) throws Exception {
-        Set<String>[] status = vcs.statusHelper();
+        Set<String>[] status = vcs.updateStatus();
         if (!status[0].isEmpty()) {
-            System.out.println("Branches" + sendList(status[0]));
+            System.out.println("Staged" + sendList(status[0]));
+            Thread.sleep(7);
         }
         if (!status[1].isEmpty()) {
-            System.out.println("Staged" + sendList(status[1]));
-        }
-        if (!status[2].isEmpty()) {
-            System.out.println("Modified" + sendList(status[2]));
-        }
-        if (!status[3].isEmpty()) {
-            System.out.println("Untracked" + sendList(status[3]));
-        }
-        if (!status[4].isEmpty()) {
-            System.out.println("Removed" + sendList(status[4]));
+            System.out.println("Unstaged" + sendList(status[1]));
+            Thread.sleep(7);
         }
     }
     public static void main(String[] args) throws Exception {
@@ -32,13 +28,13 @@ public class Main {
         String input;
         String[] arguments;
         String function;
-        int first;
+        String[] firstPass;
         VersionControlSystem vcs = null;
         while ((input = reader.readLine()) != null) {  // input is assigned to the message from electron
-            // Separates the input by reading the number, and separating that amount of following characters
-            first = input.charAt(0);
-            function = input.substring(1, first + 1);
-            arguments = readArgs(input.substring(first + 1));
+            // Decodes input
+            firstPass = decode(input);
+            function = firstPass[0];
+            arguments = decode(firstPass[1]);
             // Send response to Electron
             try {
                 if (function.equals("changeDir")) {
@@ -48,15 +44,15 @@ public class Main {
                 } else if (vcs != null) {
                     switch (function) {
                         case "add" -> {
-                            vcs.add(arguments[0]);
+                            vcs.otherAdd(arguments[0]);
                             updateStatus(vcs);
                         }
                         case "commit" -> {
-                            vcs.commit(arguments[0], arguments[1], readArgs(arguments[2]), readArgs(arguments[2]));
+                            vcs.commit(arguments[0], arguments[1], decode(arguments[2]), decode(arguments[3]));
                             updateStatus(vcs);
                         }
                         case "remove" -> {
-                            vcs.remove(arguments[0]);
+                            vcs.unstage(arguments[0]);
                             updateStatus(vcs);
                         }
                         case "log" -> System.out.println(vcs.log());
@@ -76,7 +72,8 @@ public class Main {
                             updateStatus(vcs);
                         }
                         case "update" -> {
-                            updateStatus(vcs);
+                            // updateStatus(vcs);
+                            System.out.println("Update");
                         }
                     }
                 }
@@ -85,24 +82,36 @@ public class Main {
             }
         }
     }
-    private static String[] readArgs(String input) {
-        List<String> output = new ArrayList<>();
-        int spot = 0;
-        int num;
-        while (spot < input.length()) {
-            num = input.charAt(spot);
-            output.add(input.substring(spot + 1, spot + num + 1));
-            spot += num + 1;
+
+    /**
+     * Decodes input
+     * @param input: string
+     * @return: string
+     */
+    public static String[] decode(String input) {
+        List<String> list = new ArrayList<>();
+        int i = 0;
+        while (i < input.length()) {
+            int j = i;
+            while (input.charAt(j) != '#') j++;
+
+            int length = Integer.valueOf(input.substring(i, j));
+            i = j + 1 + length;
+            list.add(input.substring(j + 1, i).trim());
         }
-        return output.toArray(new String[0]);
+        return list.toArray(new String[0]);
     }
-    private static String sendList(Set<String> input) {
-        StringBuilder output = new StringBuilder();
-        char c;
-        for (String s : input) {
-            c = (char) s.length();
-            output.append(c).append(s);
+
+    /**
+     * Encodes input
+     * @param input: string
+     * @return string
+     */
+    private static String sendList(Iterable<String> input) {
+        StringBuilder encodedString = new StringBuilder();
+        for (String str : input) {
+            encodedString.append(str.length()).append("#").append(str);
         }
-        return output.toString();
+        return encodedString.toString();
     }
 }
