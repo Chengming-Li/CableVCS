@@ -1,6 +1,6 @@
 /*
 TO DO:
-    Allow for creation of new branches
+    Debug for why it freezes
 */
 
 //#region for getting all the elements
@@ -82,7 +82,7 @@ branchDropDown.addEventListener('change', function() {
     const selectedValue = this.value;
     
     if (selectedValue === 'Create New Branch') {
-        console.log('NEW BRANCH');
+        window.electronAPI.branch();
         branchDropDown.value = currentBranch;
     } else if (selectedValue !== currentBranch) {
         currentBranch = selectedValue;
@@ -415,10 +415,9 @@ newTaskButton.addEventListener('click', function() {
 newCommitButton.addEventListener('click', function() {
     if (newCommit.value.length > 0 && stagedFilesList.length > 0) {
         window.electronAPI.commit([newCommit.value, user, completed, added])
-        resetStaged()
         setInactive(newCommitButton);
         newCommit.value = "";
-        window.electronAPI.updateStatus();
+        resetStaged()
     }
 });
 //#endregion
@@ -434,7 +433,10 @@ window.electronAPI.onGetError((event, value) => {
     if (value.startsWith("No VCS Directory Found")) {
         initDiv.style.display = "flex";
         foundDir = false;
-    } else {
+    } else if (value.startsWith("Branch with that name already exists")) {
+        alert("A branch with that name already exists, please choose a different name");
+    }
+    else {
         alert("ERROR: " + value);
     }
 })

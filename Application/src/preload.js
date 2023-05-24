@@ -44,7 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     globalLog: (arg) => ipcRenderer.send("Messages", generateConcatenation(["globalLog", generateConcatenation(arg)])),
     status: (arg) => ipcRenderer.send("Messages", generateConcatenation(["status", generateConcatenation(arg)])),
     checkout: (arg) => ipcRenderer.send("Messages", generateConcatenation(["checkout", generateConcatenation(arg)])),
-    branch: (arg) => ipcRenderer.send("Messages", generateConcatenation(["branch", generateConcatenation(arg)])),
+    branch: () => ipcRenderer.invoke('dialog:newBranch'),
     removeBranch: (arg) => ipcRenderer.send("Messages", generateConcatenation(["removeBranch", generateConcatenation(arg)])),
     reset: (arg) => ipcRenderer.send("Messages", generateConcatenation(["reset", generateConcatenation(arg)])),
     updateStatus: () => ipcRenderer.send("Messages", generateConcatenation(["updateStatus", generateConcatenation(["arg"])])),

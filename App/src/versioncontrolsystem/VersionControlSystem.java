@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.sql.Array;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -32,23 +31,16 @@ public class VersionControlSystem extends VCSUtils {
         if (!status[0].isEmpty()) {
             System.out.println("Staged" + sendList(status[0]));
         }
-        Thread.sleep(7);
+        Thread.sleep(50);
         if (!status[1].isEmpty()) {
             System.out.println("Unstaged" + sendList(status[1]));
         }
-        Thread.sleep(7);
-        List<String> branches = new ArrayList<>();
-        for (Path path : branchSet) {
-            branches.add(path.getFileName().toString());
-        }
-        branches.remove(branch);
-        branches.add(0, branch);
-        System.out.println("Branches" + sendList(branches));
-        Thread.sleep(7);
+        Thread.sleep(50);
+        updateBranches();
         printLog(false);
-        Thread.sleep(7);
+        Thread.sleep(50);
         System.out.println("Tasks" + sendList(this.tasks));
-        Thread.sleep(7);
+        Thread.sleep(50);
     }
     public VersionControlSystem(String currentDirectory) throws Exception {
         this.currentDirectory = Paths.get(currentDirectory);
@@ -509,6 +501,7 @@ public class VersionControlSystem extends VCSUtils {
         branch.toFile().setWritable(true, false);
         this.branchSet.add(branch);
         this.branchCommits.put(branchName, lastCommit);
+        updateBranches();
     }
 
     /**
@@ -853,5 +846,15 @@ public class VersionControlSystem extends VCSUtils {
         FileWriter writer = new FileWriter(vcsDirectory.resolve("DEBUG").toFile(), false);
         writer.write("");
         writer.close();
+    }
+    private void updateBranches() throws Exception {
+        List<String> branches = new ArrayList<>();
+        for (Path path : branchSet) {
+            branches.add(path.getFileName().toString());
+        }
+        branches.remove(branch);
+        branches.add(0, branch);
+        System.out.println("Branches" + sendList(branches));
+        Thread.sleep(50);
     }
 }

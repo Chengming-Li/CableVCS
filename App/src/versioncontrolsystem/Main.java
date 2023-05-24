@@ -1,12 +1,8 @@
 package versioncontrolsystem;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -14,9 +10,9 @@ public class Main {
     private static void updateStatus(VersionControlSystem vcs) throws Exception {
         Set<String>[] status = vcs.updateStatus();
         System.out.println("Staged" + sendList(status[0]));
-        Thread.sleep(7);
+        Thread.sleep(50);
         System.out.println("Unstaged" + sendList(status[1]));
-        Thread.sleep(7);
+        Thread.sleep(50);
     }
     public static void main(String[] args) throws Exception {
         // Read input from stdin
@@ -26,7 +22,8 @@ public class Main {
         String function;
         String[] firstPass;
         VersionControlSystem vcs = null;
-        while ((input = reader.readLine()) != null) {  // input is assigned to the message from electron
+        while (true) {  // input is assigned to the message from electron
+            input = reader.readLine();
             // Decodes input
             firstPass = decode(input);
             function = firstPass[0];
@@ -36,7 +33,6 @@ public class Main {
                 if (function.equals("changeDir")) {
                     vcs = new VersionControlSystem(arguments[0]);
                 } else if (function.equals("init")) {
-                    System.out.println(arguments[0]);
                     vcs = VersionControlSystem.init(arguments[0]);
                 } else if (vcs != null) {
                     switch (function) {
@@ -46,6 +42,7 @@ public class Main {
                         }
                         case "commit" -> {
                             vcs.commit(arguments[0], arguments[1], decode(arguments[2]), decode(arguments[3]));
+                            System.out.println("IGNORE");
                         }
                         case "remove" -> {
                             vcs.unstage(arguments[0]);
@@ -71,11 +68,7 @@ public class Main {
                                 updateStatus(vcs);
                             }
                             catch (Exception e) {
-                                continue;
                             }
-                        }
-                        default -> {
-                            continue;
                         }
                     }
                 }

@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { spawn } = require('child_process');
+const prompt = require('electron-prompt');
 const path = require('path')
 var mainWindow = null
-const vcs = spawn('java', ['-jar', "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\App\\out\\artifacts\\App_jar\\App.jar"]);
+var vcs;
 var closed = false;
+const jarPath = "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\App\\out\\artifacts\\App_jar\\App.jar"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -14,7 +16,24 @@ function callVCSFunction(event, input) {
     vcs.stdin.write(input + "\n");
 }
 
+function generateConcatenation(input) {
+    if (input.constructor === String) {
+        return input.length + '#' + input;
+    }
+    let encodedString = '';
+    for (let str of input) {
+        if (Array.isArray(str)) {
+            let temp = generateConcatenation(str);
+            encodedString += temp.length + '#' + temp;
+        } else {
+            encodedString += str.length + '#' + str;
+        }
+    }
+    return encodedString;
+}
+
 const createWindow = () => {
+    vcs = spawn('java', ['-jar', jarPath]);
     // Create the browser window.
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
@@ -37,6 +56,25 @@ const createWindow = () => {
         } else {
             return [path.basename(filePaths[0]), filePaths[0]]
         }
+    })
+
+    ipcMain.handle('dialog:newBranch', async () => {
+        prompt({
+            title: 'New Branch',
+            label: 'Branch Name:',
+            value: '',
+            inputAttrs: {
+                type: 'text'
+            },
+            type: 'input',
+            height: 180
+        })
+        .then((r) => {
+            if(r !== null) {
+                vcs.stdin.write(generateConcatenation(["branch", generateConcatenation(r)]) + "\n");
+            }
+        })
+        .catch(console.error);
     })
 
     Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
@@ -69,7 +107,6 @@ const createWindow = () => {
     vcs.stderr.on('data', (data) => {
         if (!closed) {
             mainWindow.webContents.send('Error', data.toString());
-            // console.log(data.toString());
         }
     });
 
