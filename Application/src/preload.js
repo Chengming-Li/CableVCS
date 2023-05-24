@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     add: (arg) => ipcRenderer.send("Messages", generateConcatenation(["add", generateConcatenation(arg)])),
     commit: (arg) => ipcRenderer.send("Messages", generateConcatenation(["commit", generateConcatenation(arg)])),
     remove: (arg) => ipcRenderer.send("Messages", generateConcatenation(["remove", generateConcatenation(arg)])),
-    log: (arg) => ipcRenderer.send("Messages", generateConcatenation(["log", generateConcatenation(arg)])),
+    log: () => ipcRenderer.send("Messages", generateConcatenation(["log", generateConcatenation("arg")])),
     globalLog: (arg) => ipcRenderer.send("Messages", generateConcatenation(["globalLog", generateConcatenation(arg)])),
     status: (arg) => ipcRenderer.send("Messages", generateConcatenation(["status", generateConcatenation(arg)])),
     checkout: (arg) => ipcRenderer.send("Messages", generateConcatenation(["checkout", generateConcatenation(arg)])),

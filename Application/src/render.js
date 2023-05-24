@@ -1,6 +1,5 @@
 /*
 TO DO:
-    Add functionality to revert
     Allow for creation of new branches
 */
 
@@ -346,7 +345,10 @@ function addCommit(text, hash) {
     button.innerText = "Revert"
     item.appendChild(button);
     button.addEventListener("click", function() {
-        // window.electronAPI.reset(hash);
+        window.electronAPI.reset(hash);
+        resetCommitLog();
+        window.electronAPI.updateStatus();
+        window.electronAPI.log();
     });
     logText.appendChild(item);
 }
@@ -416,6 +418,7 @@ newCommitButton.addEventListener('click', function() {
         resetStaged()
         setInactive(newCommitButton);
         newCommit.value = "";
+        window.electronAPI.updateStatus();
     }
 });
 //#endregion

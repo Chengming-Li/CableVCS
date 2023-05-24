@@ -46,14 +46,12 @@ public class Main {
                         }
                         case "commit" -> {
                             vcs.commit(arguments[0], arguments[1], decode(arguments[2]), decode(arguments[3]));
-                            updateStatus(vcs);
                         }
                         case "remove" -> {
                             vcs.unstage(arguments[0]);
                             updateStatus(vcs);
                         }
-                        case "log" -> System.out.println(vcs.log());
-                        case "globalLog" -> System.out.println(vcs.globalLog());
+                        case "log" -> vcs.printLog(false);
                         case "checkout" -> {
                             if (arguments[1].startsWith("boolean")) {
                                 vcs.checkout(arguments[0], arguments[1].equals("booleanTrue"));

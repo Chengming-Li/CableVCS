@@ -837,7 +837,7 @@ public class VersionControlSystem extends VCSUtils {
         encodedString.append(input.length()).append("#").append(input);
         return encodedString.toString();
     }
-    private void printLog(Boolean global) throws Exception {
+    public void printLog(Boolean global) throws Exception {
         if (global) {
             System.out.println("Log" + sendList(globalLogList()));
         } else {
