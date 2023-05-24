@@ -24,6 +24,7 @@ const newCommit = document.getElementById('enter-commit');
 const newCommitButton = document.getElementById('add-new-commit');
 const initDiv = document.getElementById("init");
 const initButton = document.getElementById("init-button");
+const refreshButton = document.getElementById("refresh")
 //#endregion
 
 // global variables
@@ -44,7 +45,7 @@ const branches = [];
 var topPosition = logText.offsetTop - 17;
 const maxTop = topPosition;
 var user = "user";
-var intervalId;
+var foundDir = false;
 
 function remove(list, element) {
     let index = list.indexOf(element);
@@ -56,14 +57,17 @@ function remove(list, element) {
 //#region for setting up header
 getDir.addEventListener('click', () => {
     window.electronAPI.selectFolder().then(result=>{
-        clearInterval(intervalId);
         if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
             resetEverything();
+            foundDir = true;
             currentRepo = result[0];
             currentPath = result[1];
             populate();
         }
     })
+});
+refreshButton.addEventListener('click', () => {
+    window.electronAPI.updateStatus();
 });
 function populate() {
     if (currentRepo.length <= 20) {
@@ -72,10 +76,7 @@ function populate() {
         repoName.textContent = currentRepo.substring(0, 17) + "...";
     }
     getDir.title = "Directory: " + currentRepo;
-    window.electronAPI.changeDir(currentPath)
-    intervalId = setInterval(function() {
-        window.electronAPI.updateStatus();
-    }, 1000);
+    window.electronAPI.changeDir(currentPath);
 }
 
 branchDropDown.addEventListener('change', function() {
@@ -320,6 +321,7 @@ function resetEverything() {
     newTask.value = "";
     setInactive(newTaskButton);
     setInactive(newCommitButton);
+    foundDir = false;
 }
 function changeBranch() {
     resetStaged();
@@ -344,7 +346,7 @@ function addCommit(text, hash) {
     button.innerText = "Revert"
     item.appendChild(button);
     button.addEventListener("click", function() {
-        console.log(hash);
+        // window.electronAPI.reset(hash);
     });
     logText.appendChild(item);
 }
@@ -428,6 +430,7 @@ window.electronAPI.onGetMessage((event, value) => {
 window.electronAPI.onGetError((event, value) => {
     if (value.startsWith("No VCS Directory Found")) {
         initDiv.style.display = "flex";
+        foundDir = false;
     } else {
         alert("ERROR: " + value);
     }

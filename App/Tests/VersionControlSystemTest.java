@@ -500,34 +500,13 @@ class VersionControlSystemTest {
     void UITest() {
         try {
             VersionControlSystem vcs = cleanUp();
-            Path path = Path.of(TESTDIR + "\\testText.txt");
+            Path path = Path.of(TESTDIR + "\\test Text.txt");
             FileWriter writer = new FileWriter(path.toFile());
             writer.write("This is some nice text, yada yada");
             writer.close();
             vcs.add(path.toString());
             vcs.commit("First Commit", "User", null, new String[] {"Hello", "There"});
-            path = Path.of(TESTDIR + "\\testText1.txt");
-            writer = new FileWriter(path.toFile());
-            writer.write("This is some nice text");
-            writer.close();
-            vcs.add(path.toString());
-            vcs.commit("Second Commit", "User", new String[] {"There"}, new String[] {"General", "Kenobi"});
-            path = Path.of(TESTDIR + "\\testText2.txt");
-            writer = new FileWriter(path.toFile());
-            writer.write("This is some nice text");
-            writer.close();
-            path = Path.of(TESTDIR + "\\testText3.txt");
-            writer = new FileWriter(path.toFile());
-            writer.write("This is some nice text");
-            writer.close();
-            vcs.add(path.toString());
             vcs = new VersionControlSystem(TESTDIR);
-
-            /*vcs.commit("a","a");
-            vcs = new VersionControlSystem(TESTDIR);
-            System.out.println("\n\n\n\n");
-            System.out.println(vcs.status());
-            System.out.println(Arrays.toString(vcs.updateStatus()));*/
         } catch (Exception e) {
             e.printStackTrace();
             fail();

@@ -34,10 +34,8 @@ public class Tree extends VCSUtils {
         try (BufferedReader br = new BufferedReader(new FileReader(findHash(hash, vcsDirectory).toFile()))) {
             Map<String, String> map = new HashMap<>();
             String line;
-            String[] split;
             while ((line = br.readLine()) != null) {
-                split = line.split(" ");
-                map.put(split[0].trim(), split[1].trim());
+                map.put(line.substring(0, line.length()-40).trim(), line.substring(line.length()-40).trim());
             }
             return new Tree(hash, map);
         }

@@ -21,7 +21,7 @@ public class VersionControlSystem extends VCSUtils {
     private Map<String, String> indexMap;  // map of index/staging area, [name] : [hash] [status]
     // just used for init()
     private static final String[] SUBDIRECTORIES = {"Objects", "Branches", "Tasks", "CompletedTasks"};
-    private static final String[] FILES = {"HEAD", "Index", "AllCommits"};
+    private static final String[] FILES = {"HEAD", "Index", "AllCommits", "DEBUG"};
     private static final int LENGTHOFHASHANDSTATUS = 43;
     private Map<String, Commit> commitCache;  // all commits
     private Map<String, Commit> branchCommits;
@@ -779,11 +779,13 @@ public class VersionControlSystem extends VCSUtils {
         return tasks;
     }
     public Set<String>[] updateStatus() throws Exception {
-        String p;
+        clearDebug();
         Set<String> staged = new HashSet<>();
         Set<String> unstaged = new HashSet<>();
         Set<String> indexFiles = new HashSet<>(indexMap.keySet());
         Set<String> commitFiles = new HashSet<>(lastCommit.getTree().map.keySet());
+        writeDebug(String.format("Index:\n%s\nCommit:\n%s\nWorking Directory:\n%s\n", indexFiles, commitFiles, getWorkingDir()));
+        String p;
         String line;
         for (Path path : getWorkingDir()) {
             p = this.currentDirectory.relativize(path).toString();
@@ -804,6 +806,7 @@ public class VersionControlSystem extends VCSUtils {
             indexFiles.remove(p);
             commitFiles.remove(p);
         }
+        writeDebug("808\n");
         for (String i : indexFiles) {
             if (indexMap.get(i).endsWith("2")) {
                 staged.add(i);
@@ -812,12 +815,14 @@ public class VersionControlSystem extends VCSUtils {
             }
             commitFiles.remove(i);
         }
+        writeDebug("817\n");
         for (String i : commitFiles) {
             unstaged.add(i + " | (deleted)");
         }
         Set<String>[] setArray = new HashSet[2];
         setArray[0] = staged;
         setArray[1] = unstaged;
+        writeDebug(String.format("Staged:\n%s\nUnstaged:\n%s\n", staged, unstaged));
         return setArray;
     }
     public static String sendList(Iterable<String> input) {
@@ -838,5 +843,15 @@ public class VersionControlSystem extends VCSUtils {
         } else {
             System.out.println("Log" + sendList(logList()));
         }
+    }
+    private void writeDebug(String text) throws Exception {
+        FileWriter writer = new FileWriter(vcsDirectory.resolve("DEBUG").toFile(), true);
+        writer.write(text);
+        writer.close();
+    }
+    private void clearDebug() throws Exception {
+        FileWriter writer = new FileWriter(vcsDirectory.resolve("DEBUG").toFile(), false);
+        writer.write("");
+        writer.close();
     }
 }

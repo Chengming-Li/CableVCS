@@ -61,7 +61,7 @@ const createWindow = () => {
             } else if (d.startsWith("ERROR:")) {
                 mainWindow.webContents.send('Error', d.substring(7));
             } else if (!d.startsWith("IGNORE")) {
-                console.log(d + "V");
+                console.log(d);
             }
         }
     }

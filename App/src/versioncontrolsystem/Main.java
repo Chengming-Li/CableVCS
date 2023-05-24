@@ -13,14 +13,10 @@ import java.util.Set;
 public class Main {
     private static void updateStatus(VersionControlSystem vcs) throws Exception {
         Set<String>[] status = vcs.updateStatus();
-        if (!status[0].isEmpty()) {
-            System.out.println("Staged" + sendList(status[0]));
-            Thread.sleep(7);
-        }
-        if (!status[1].isEmpty()) {
-            System.out.println("Unstaged" + sendList(status[1]));
-            Thread.sleep(7);
-        }
+        System.out.println("Staged" + sendList(status[0]));
+        Thread.sleep(7);
+        System.out.println("Unstaged" + sendList(status[1]));
+        Thread.sleep(7);
     }
     public static void main(String[] args) throws Exception {
         // Read input from stdin
@@ -40,6 +36,7 @@ public class Main {
                 if (function.equals("changeDir")) {
                     vcs = new VersionControlSystem(arguments[0]);
                 } else if (function.equals("init")) {
+                    System.out.println(arguments[0]);
                     vcs = VersionControlSystem.init(arguments[0]);
                 } else if (vcs != null) {
                     switch (function) {
@@ -72,7 +69,15 @@ public class Main {
                             updateStatus(vcs);
                         }
                         case "updateStatus" -> {
-                            updateStatus(vcs);
+                            try {
+                                updateStatus(vcs);
+                            }
+                            catch (Exception e) {
+                                continue;
+                            }
+                        }
+                        default -> {
+                            continue;
                         }
                     }
                 }
