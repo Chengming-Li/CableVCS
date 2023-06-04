@@ -2,7 +2,6 @@
 TO DO:
     Debug for why it freezes
 */
-
 //#region for getting all the elements
 const task = document.getElementById("tasks");
 const stage = document.getElementById("stagingArea");
@@ -55,15 +54,7 @@ function remove(list, element) {
 
 //#region for setting up header
 getDir.addEventListener('click', () => {
-    window.electronAPI.selectFolder().then(result=>{
-        if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
-            resetEverything();
-            foundDir = true;
-            currentRepo = result[0];
-            currentPath = result[1];
-            populate();
-        }
-    })
+    window.electronAPI.selectFolder()
 });
 refreshButton.addEventListener('click', () => {
     window.electronAPI.updateStatus();
@@ -139,7 +130,7 @@ function addScroll(scrollable, parent, offset = 0) {
     return {
         sc: scrollCode,
         ct: correctTop
-      }
+    }
 }
 const logScrollFunc = addScroll(logText, log, 30);
 logText.addEventListener('wheel', logScrollFunc.sc);
@@ -227,7 +218,7 @@ function addFile(name, status) {
     // Create a new item div
     var item = document.createElement("div");
     item.className = "item";
-  
+
     // Create a new text box
     var textbox = document.createElement('p');
     textbox.textContent = name;
@@ -257,7 +248,7 @@ function addFile(name, status) {
         }
     });
     thisList.push(item);
-  
+
     // Add the item to the list
     parent.appendChild(item);
     item.style.height = `${textbox.offsetHeight + 9}px`;
@@ -268,7 +259,7 @@ function addTask(name) {
     let newlyAdded = (added.includes(name));
     var item = document.createElement("div");
     item.className = "item";
-  
+
     // Create a new text box
     var textbox = document.createElement('p');
     textbox.textContent = name;
@@ -290,7 +281,7 @@ function addTask(name) {
         }
         clicked = !clicked;
     });
-  
+
     // Add the item to the list
     parent.appendChild(item);
     item.style.height = `${textbox.offsetHeight + 9}px`;
@@ -472,5 +463,15 @@ window.electronAPI.updateLog((event, value) => {
         let index = item.indexOf("\n");
         addCommit(item.substring(index + 1), item.substring(0, index))
     })
+})
+
+window.electronAPI.updateDir((event, result) => {
+    if (result[0] !== undefined && currentRepo !== result[0] && result[0].length > 0) {
+        resetEverything();
+        foundDir = true;
+        currentRepo = result[0];
+        currentPath = result[1];
+        populate();
+    }
 })
 //#endregion

@@ -6,6 +6,7 @@ var mainWindow = null
 var vcs;
 var closed = false;
 const jarPath = "C:\\Users\\malic\\Downloads\\Project\\VersionControlSystem\\App\\out\\artifacts\\App_jar\\App.jar"
+var currentDir = [];
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -54,7 +55,8 @@ const createWindow = () => {
         if (canceled) {
             return ["", ""]
         } else {
-            return [path.basename(filePaths[0]), filePaths[0]]
+            currentDir = [path.basename(filePaths[0]), filePaths[0]]
+            mainWindow.webContents.send('Dir', currentDir);
         }
     })
 
@@ -76,8 +78,6 @@ const createWindow = () => {
         })
         .catch(console.error);
     })
-
-    Object.freeze(mainWindow);  // prevents anyone from changing mainWindow's value
 
     // listen to messages in the Messages channel
     ipcMain.on("Messages", callVCSFunction)

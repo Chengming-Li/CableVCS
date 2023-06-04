@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateUnstaged: (callback) => ipcRenderer.on("Unstaged", callback),
     updateLog: (callback) => ipcRenderer.on("Log", callback),
     updateTasks: (callback) => ipcRenderer.on("Tasks", callback),
+    updateDir: (callback) => ipcRenderer.on("Dir", callback),
     generateConcatenation: (strings) => generateConcatenation(strings),
     decodeConcatenation: (strings) => decodeConcatenation(strings.slice(0, -2)),
 })
